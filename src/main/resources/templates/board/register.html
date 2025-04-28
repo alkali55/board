@@ -11,18 +11,20 @@
 
         <div class="row mt-3">
 
-            <form th:action="@{/board/register}" method="post">
+            <form th:action="@{/board/register}" th:object="${board}" method="post">
                 <div class="input-group mb-3">
                     <span class="input-group-text">Title</span>
-                    <input type="text" class="form-control" placeholder="Title....">
+                    <input type="text" class="form-control" th:field="*{title}" placeholder="Title....">
+                    <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text">Content</span>
-                    <input type="text" class="form-control" placeholder="Content....">
+                    <input type="text" class="form-control" th:field="*{content}" placeholder="Content....">
+                    <div th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text">Writer</span>
-                    <input type="text" class="form-control" placeholder="Writer....">
+                    <input type="text" class="form-control" th:field="*{writer}" placeholder="Writer....">
                 </div>
                 <div class="my-4">
                     <div class="float-end">
