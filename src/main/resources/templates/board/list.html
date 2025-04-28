@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{layout/basic.html}">
+<head>
+</head>
+<body>
+<div layout:fragment="content">
+  <h1>Board List</h1>
+  <button type="button" class="btn btn-info btn-lg d-flex float-end mb-3" th:onclick="|location.href='@{/board/register}'|">글쓰기</button>
+  <table class="table table-hover">
+    <thead>
+    <tr>
+      <th>글번호</th>
+      <th>제목</th>
+      <th>작성자</th>
+      <th>작성일</th>
+      <th>조회수</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="board : ${boards}">
+      <td th:text="${board.boardNo}">번호</td>
+      <td th:text="${board.title}">제목</td>
+      <td th:text="${board.writer}">작성자</td>
+      <td th:text="${#dates.format(board.postDate, 'yyyy-MM-dd')}">작성일</td>
+      <td th:text="${board.readCount}">조회수</td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
+<script layout:fragment="script" th:inline="javascript">
+  // comment
+  console.log("script...");
+  const arr = [[${arr}]]
+</script>
+</body>
+</html>
