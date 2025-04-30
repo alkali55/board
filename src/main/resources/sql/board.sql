@@ -39,3 +39,35 @@ CREATE TABLE `jis`.`hboard` (
 COMMENT = '계층형 게시판';
 
 insert into hboard(title, content, writer) values('게시판 생성', '많은 이용 바랍니다', 'asdf123');
+
+select * from hboard;
+
+
+
+-- boardupfiles 테이블
+CREATE TABLE `jis`.`boardupfiles` (
+  `fileNo` INT NOT NULL AUTO_INCREMENT,
+  `originalFileName` VARCHAR(100) NOT NULL,
+  `newFileName` VARCHAR(150) NOT NULL,
+  `thumbFileName` VARCHAR(150) NULL,
+  `isImage` TINYINT(4) NULL DEFAULT 0,
+  `ext` VARCHAR(20) NULL,
+  `size` BIGINT(20) NULL,
+  `boardNo` INT NULL,
+  `base64` LONGTEXT NULL,
+  `filePath` VARCHAR(200) NULL,
+  PRIMARY KEY (`fileNo`),
+  INDEX `fk_upfiles_hboard_idx` (`boardNo` ASC) VISIBLE,
+  CONSTRAINT `fk_upfiles_hboard`
+    FOREIGN KEY (`boardNo`)
+    REFERENCES `jis`.`hboard` (`boardNo`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION)
+COMMENT = '게시물에 업로드되는 파일정보';
+
+-- 업로드 파일 저장
+insert into boardupfiles (
+	boardNo, originalFileName, newFileName, thumbFileName, isImage, ext, size, base64, filePath
+) values (
+	#{boardNo}, #{originalFileName}, #{newFileName}, #{thumbFileName}, #{isImage}, #{ext}, #{size}, #{base64}, #{filePath}
+);

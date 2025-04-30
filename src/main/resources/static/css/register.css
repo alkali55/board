@@ -1,0 +1,29 @@
+.file-preview {
+
+    position: relative;
+    margin: 10px;
+    border: 1px solid gray;
+    width: 120px;
+    text-align: center;
+    display: inline-block;
+}
+
+
+.file-preview img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    display: block;
+}
+
+
+.file-remove-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    color: red;
+    background: rgb(230, 211, 211);
+    border-radius: 50%;
+    padding: 2px 5px;
+    cursor: pointer;
+}

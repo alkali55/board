@@ -1,6 +1,8 @@
 package com.miniproj.service;
 
+import com.miniproj.domain.HBoardDTO;
 import com.miniproj.domain.HBoardVO;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -8,4 +10,10 @@ public interface BoardService {
 
     // 글 조회
     List<HBoardVO> getAllBoards();
+
+    // 글 저장 (업로드파일)
+    void saveBoardWithFiles(HBoardDTO board);
+    
+    // 글 상세 조회
+    void viewBoardByNo(int boardNo);
 }

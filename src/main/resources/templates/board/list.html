@@ -22,7 +22,7 @@
     <tbody>
     <tr th:each="board : ${boards}">
       <td th:text="${board.boardNo}">번호</td>
-      <td th:text="${board.title}">제목</td>
+      <td><a th:text="${board.title}" th:href="@{/board/detail(boardNo=${board.boardNo})}">제목</a></td>
       <td th:text="${board.writer}">작성자</td>
       <td th:text="${#dates.format(board.postDate, 'yyyy-MM-dd')}">작성일</td>
       <td th:text="${board.readCount}">조회수</td>

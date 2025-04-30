@@ -1,5 +1,6 @@
 package com.miniproj.mapper;
 
+import com.miniproj.domain.BoardUpFilesVODTO;
 import com.miniproj.domain.HBoardDTO;
 import com.miniproj.domain.HBoardVO;
 import org.apache.ibatis.annotations.*;
@@ -19,7 +20,18 @@ public interface BoardMapper {
     @Update("update hboard set ref = #{boardNo} where boardNo=#{boardNo}")
     int updateRefToBoardNo(@Param("boardNo") int boardNo);
 
-    @Select("select * from hboard")
+    @Select("select * from hboard order by boardNo desc")
     List<HBoardVO> selectAllBoards();
+
+    // 파일 저장
+    @Insert("""
+            insert into boardupfiles (
+            	boardNo, originalFileName, newFileName, thumbFileName, isImage, ext, size, base64, filePath
+            ) values (
+            	#{boardNo}, #{originalFileName}, #{newFileName}, #{thumbFileName}, #{isImage}, #{ext}, #{size}, #{base64}, #{filePath}
+            )
+            """)
+    int insertUploadFile(BoardUpFilesVODTO file);
+
 
 }
