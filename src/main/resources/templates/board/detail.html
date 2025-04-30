@@ -14,23 +14,23 @@
 
                 <div class="input-group mb-3">
                     <span class="input-group-text">Title</span>
-                    <input type="text" class="form-control" th:field="*{title}" placeholder="Title....">
+                    <input type="text" class="form-control" th:field="*{title}" placeholder="Title...." readonly>
                     <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
                     <div id="error-title" class="error-message"></div>
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text">Content</span>
-                    <textarea class="form-control" th:field="*{content}" rows="5"></textarea>
+                    <textarea class="form-control" th:field="*{content}" rows="5" readonly></textarea>
                     <div th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
                     <div id="error-content" class="error-message"></div>
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text">Writer</span>
-                    <input type="text" class="form-control" th:field="*{writer.memberId}" placeholder="Writer....">
+                    <input type="text" class="form-control" th:field="*{writer.memberId}" placeholder="Writer...." readonly>
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text">postDate</span>
-                    <input type="text" class="form-control" th:value="${#temporals.format(detail.postDate, 'yyyy-MM-dd HH:mm')}" placeholder="Writer....">
+                    <input type="text" class="form-control" th:value="${#temporals.format(detail.postDate, 'yyyy-MM-dd HH:mm')}" readonly>
                 </div>
                 <!--첨부파일-->
                 <div th:each="file : ${detail.upfiles}">
@@ -41,12 +41,14 @@
 
                 </div>
 
-                <div id="preview"></div>
+                <div th:if="${detail.upfiles[0].originalFileName} == null">
+                    <p>첨부파일이 없습니다.</p>
+                </div>
 
                 <div class="my-4">
                     <div class="float-end">
-                        <button type="submit" class="btn btn-primary btn-lg">저장</button>
-                        <button type="reset" class="btn btn-secondary btn-lg">취소</button>
+                        <a th:href="@{/board/list}" class="btn btn-primary btn-lg">목록으로</a>
+                        <!-- 수정하기, 답글달기 -->
                     </div>
                 </div>
 
