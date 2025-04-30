@@ -3,7 +3,46 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.miniproj.mapper.BoardMapper">
+    <resultMap id="BoardDetailMap" type="com.miniproj.domain.HBoardDeatilInfo">
+<!--        게시글 정보-->
+        <id property="boardNo" column="boardNo" />
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="postDate" column="postDate"/>
+        <result property="readCount" column="readCount"/>
+        <result property="ref" column="ref"/>
+        <result property="step" column="step"/>
+        <result property="refOrder" column="refOrder"/>
+<!--        작성자 정보-->
+        <association property="writer" javaType="com.miniproj.domain.MemberVO">
+            <id property="memberId" column="writer" />
+            <result property="memberName" column="memberName"/>
+            <result property="email" column="email"/>
+        </association>
+<!--        첨부파일 리스트-->
+        <collection property="upfiles" ofType="com.miniproj.domain.BoardUpFilesVODTO">
+            <id property="fileNo" column="fileNo"/>
+            <result property="originalFileName" column="originalFileName"/>
+            <result property="newFileName" column="newFileName"/>
+            <result property="thumbFileName" column="thumbFileName"/>
+            <result property="isImage" column="isImage"/>
+            <result property="ext" column="ext"/>
+            <result property="size" column="size"/>
+            <result property="boardNo" column="boardNo"/>
+            <result property="base64" column="base64"/>
+            <result property="filePath" column="filePath"/>
+        </collection>
 
-
+    </resultMap>
+    
+    <select id="selectBoardDetailInfoByBoardNo" resultMap="BoardDetailMap">
+        select h.boardNo, h.title, h.content, h.writer, h.postDate, h.readCount, h.ref, h.step, h.refOrder,
+        f.*, m.memberName, m.email
+        from hboard h left outer join boardupfiles f
+        on h.boardNo = f.boardNo
+        inner join member m
+        on h.writer = m.memberId
+        where h.boardNo = #{boardNo}
+    </select>
 
 </mapper>

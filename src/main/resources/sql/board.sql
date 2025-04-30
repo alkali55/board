@@ -71,3 +71,15 @@ insert into boardupfiles (
 ) values (
 	#{boardNo}, #{originalFileName}, #{newFileName}, #{thumbFileName}, #{isImage}, #{ext}, #{size}, #{base64}, #{filePath}
 );
+
+select * from boardupfiles where boardNo = 7;
+
+-- 8번 글 : hboard, boardupfiles, member
+-- 조인
+select h.boardNo, h.title, h.content, h.writer, h.postDate, h.readCount, h.ref, h.step, h.refOrder,
+f.*, m.memberName, m.email
+from hboard h left outer join boardupfiles f
+on h.boardNo = f.boardNo
+inner join member m
+on h.writer = m.memberId
+where h.boardNo = 8;

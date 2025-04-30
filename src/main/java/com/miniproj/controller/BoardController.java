@@ -2,6 +2,7 @@ package com.miniproj.controller;
 
 import com.miniproj.domain.BoardUpFilesVODTO;
 import com.miniproj.domain.HBoardDTO;
+import com.miniproj.domain.HBoardDeatilInfo;
 import com.miniproj.domain.HBoardVO;
 import com.miniproj.service.BoardService;
 import com.miniproj.util.FileUploadUtil;
@@ -98,12 +99,14 @@ public class BoardController {
     }
 
     @GetMapping("/detail")
-    public String boardDetail(@RequestParam(value = "boardNo") int boardNo){
+    public String boardDetail(@RequestParam(value = "boardNo") int boardNo, Model model){
 
         log.info("게시판 상세보기 호출....boardNo = {}", boardNo);
 
-        boardService.viewBoardByNo(boardNo);
+//        boardService.viewBoardByNo(boardNo);
 
+        List<HBoardDeatilInfo> detailInfos = boardService.viewBoardDetailInfoByNo(boardNo);
+        model.addAttribute("detail", detailInfos.get(0));
         return "/board/detail";
     }
 

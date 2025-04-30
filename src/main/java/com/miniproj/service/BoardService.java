@@ -1,6 +1,7 @@
 package com.miniproj.service;
 
 import com.miniproj.domain.HBoardDTO;
+import com.miniproj.domain.HBoardDeatilInfo;
 import com.miniproj.domain.HBoardVO;
 import jakarta.validation.Valid;
 
@@ -16,4 +17,7 @@ public interface BoardService {
     
     // 글 상세 조회
     void viewBoardByNo(int boardNo);
+
+    // 글 상세 조회 : resultMap
+    List<HBoardDeatilInfo> viewBoardDetailInfoByNo(int boardNo);
 }

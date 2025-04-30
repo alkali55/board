@@ -73,4 +73,10 @@ public class BoardMapperTests {
 
     }
 
+    @Test
+    public void selectBoardDetailInfoByBoardNoTest(){
+
+        log.info("resultMap : {}", boardMapper.selectBoardDetailInfoByBoardNo(1).get(0));
+    }
+
 }

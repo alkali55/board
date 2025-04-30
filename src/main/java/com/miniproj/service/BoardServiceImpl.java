@@ -2,6 +2,7 @@ package com.miniproj.service;
 
 import com.miniproj.domain.BoardUpFilesVODTO;
 import com.miniproj.domain.HBoardDTO;
+import com.miniproj.domain.HBoardDeatilInfo;
 import com.miniproj.domain.HBoardVO;
 import com.miniproj.mapper.BoardMapper;
 import lombok.RequiredArgsConstructor;
@@ -40,5 +41,10 @@ public class BoardServiceImpl implements BoardService{
     @Override
     public void viewBoardByNo(int boardNo) {
 
+    }
+
+    @Override
+    public List<HBoardDeatilInfo> viewBoardDetailInfoByNo(int boardNo) {
+        return boardMapper.selectBoardDetailInfoByBoardNo(boardNo);
     }
 }
