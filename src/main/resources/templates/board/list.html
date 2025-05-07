@@ -17,15 +17,26 @@
       <th>작성자</th>
       <th>작성일</th>
       <th>조회수</th>
+      <th>ref</th>
+      <th>step</th>
+      <th>refOrder</th>
     </tr>
     </thead>
     <tbody>
     <tr th:each="board : ${boards}">
       <td th:text="${board.boardNo}">번호</td>
-      <td><a th:text="${board.title}" th:href="@{/board/detail(boardNo=${board.boardNo})}">제목</a></td>
+      <td>
+        <div th:style="|margin-left: calc(${board.step} * 20px)|">
+          <img th:if="${board.step > 0}" src="/images/reply.png" style="width: 15px; height: 15px;">
+          <a class="list-group-item list-group-item-action" th:text="${board.title}" th:href="@{/board/detail(boardNo=${board.boardNo})}" style="display: inline;">제목</a>
+        </div>
+      </td>
       <td th:text="${board.writer}">작성자</td>
       <td th:text="${#dates.format(board.postDate, 'yyyy-MM-dd')}">작성일</td>
       <td th:text="${board.readCount}">조회수</td>
+      <td th:text="${board.ref}">ref</td>
+      <td th:text="${board.step}">step</td>
+      <td th:text="${board.refOrder}">refOrder</td>
     </tr>
     </tbody>
   </table>

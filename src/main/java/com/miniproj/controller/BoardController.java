@@ -6,6 +6,8 @@ import com.miniproj.domain.HBoardDeatilInfo;
 import com.miniproj.domain.HBoardVO;
 import com.miniproj.service.BoardService;
 import com.miniproj.util.FileUploadUtil;
+import com.miniproj.util.GetClientIPAddr;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+// 컨트롤러단에서 해야 할일
+// 1) URI 매핑
+// 2) view 단에 보내준 매개 변수 수집
+// 3) 데이터베이스에 대한 CRUD를 수행하기 위해 service단의 메서드 호출
+// 4) 부가적으로 HttpServletRequest, HttpServletResponse, HttpSession 등의
+//    Servlet 객체들을 이용할 수 있다. 이러한 객체를 이용해서 구현할 기능이 있으면 그 기능은 컨트롤러에 구현한다.
 @Controller
 @Slf4j
 @RequiredArgsConstructor
@@ -99,15 +108,51 @@ public class BoardController {
     }
 
     @GetMapping("/detail")
-    public String boardDetail(@RequestParam(value = "boardNo") int boardNo, Model model){
+    public String boardDetail(@RequestParam(value = "boardNo") int boardNo, Model model, HttpServletRequest request){
 
         log.info("게시판 상세보기 호출....boardNo = {}", boardNo);
+        log.info("클라이언트 ip = {}", GetClientIPAddr.getClientIP(request));
 
-//        boardService.viewBoardByNo(boardNo);
+        String ipAddr = GetClientIPAddr.getClientIP(request);
+//        List<HBoardDeatilInfo> detailInfos = boardService.viewBoardDetailInfoByNo(boardNo);
 
-        List<HBoardDeatilInfo> detailInfos = boardService.viewBoardDetailInfoByNo(boardNo);
+        List<HBoardDeatilInfo> detailInfos = boardService.viewBoardByNo(boardNo, ipAddr);
         model.addAttribute("detail", detailInfos.get(0));
+        log.info("첨부파일 리스트 : {}", detailInfos.get(0).getUpfiles());
         return "/board/detail";
+    }
+
+    // 답글 등록폼
+    @GetMapping("/showReplyForm")
+    public String showReplyForm(@RequestParam("ref") int ref, @RequestParam("step") int step,
+                                @RequestParam("refOrder") int refOrder, Model model){
+        log.info("replyForm 요청....");
+
+        HBoardDTO reply = new HBoardDTO();
+        reply.setRef(ref);
+        reply.setStep(step);
+        reply.setRefOrder(refOrder);
+
+        model.addAttribute("reply", reply);
+        return "/board/replyForm";
+    }
+
+    // 답글 저장
+    @PostMapping("/saveReply")
+    public String saveReply(@Valid @ModelAttribute("reply") HBoardDTO reply, BindingResult bindingResult) throws IOException {
+
+        log.info("reply = {}", reply);
+
+        for (MultipartFile mpf : reply.getMultipartFiles()){
+            log.info("reply 업로드 파일 이름 : {}", mpf.getOriginalFilename());
+        }
+
+        List<BoardUpFilesVODTO> upFilesVODTOS = fileUploadUtil.saveFiles(reply.getMultipartFiles());
+        reply.setUpfiles(upFilesVODTOS);
+
+        boardService.saveReply(reply);
+
+        return "redirect:/board/list";
     }
 
 }

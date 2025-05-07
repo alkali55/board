@@ -20,4 +20,10 @@ public interface BoardService {
 
     // 글 상세 조회 : resultMap
     List<HBoardDeatilInfo> viewBoardDetailInfoByNo(int boardNo);
+
+    // 글 상세 조회 + 조회수 처리
+    List<HBoardDeatilInfo> viewBoardByNo(int boardNo, String ipAddr);
+    
+    // 답글 저장
+    void saveReply(HBoardDTO reply);
 }

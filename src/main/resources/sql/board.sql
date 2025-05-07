@@ -83,3 +83,45 @@ on h.boardNo = f.boardNo
 inner join member m
 on h.writer = m.memberId
 where h.boardNo = 8;
+
+-- 조회수 처리
+-- boardreadlog 테이블 생성
+CREATE TABLE `jis`.`boardreadlog` (
+  `boardReadLogNo` INT NOT NULL AUTO_INCREMENT,
+  `readWho` VARCHAR(130) NOT NULL,
+  `readWhen` DATETIME NULL DEFAULT now(),
+  `boardNo` INT NULL,
+  PRIMARY KEY (`boardReadLogNo`),
+  INDEX `fk_boardreadlog_boardno_idx` (`boardNo` ASC) VISIBLE,
+  CONSTRAINT `fk_boardreadlog_boardno`
+    FOREIGN KEY (`boardNo`)
+    REFERENCES `jis`.`hboard` (`boardNo`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+COMMENT = '게시글 조회 정보를 저장하는 테이블';
+
+-- ipAddr유저가 boardNo번 글을 조회한 적이 있는지?
+select * from boardreadlog where boardNo = 8 and readWho = '127.0.0.1';
+
+insert into boardreadlog (readWho, boardNo) values ('127.0.0.1', 8);
+
+select DATEDIFF(now(), readWhen) as datediff from boardreadlog where readWho = '127.0.0.1' and boardNo = 8;
+
+select ifnull((select DATEDIFF(now(), readWhen) from boardreadlog where readWho = '127.0.0.1' and boardNo = 8), -1);
+
+-- hboard에서 조회수(readCount) 1 증가
+update hboard set readcount = readcount + 1 where boardNo = 8;
+
+-- 24시간이 지났다면, readWhen을 업데이트
+update boardreadlog set readWhen = now() where readWho = '127.0.0.1' and boardNo = 8;
+
+-- 답글 처리
+
+-- 부모글에 대한 다른 답글이 있는 상태에서, 부모글의 답글이 추가되는 경우
+-- (자리확보를 위해) 기존의 답글의 refOrder값을 update해야 한다.
+update hboard set refOrder = refOrder + 1 where ref = #{ref} and refOrder > #{refOrder};
+
+-- 답글을 입력받아서 답글을 저장하고, 부모글의 boardNo를 ref에, 
+-- 부모글의 step + 1을 step에, 부모글의 refOrder + 1을 refOrder에 저장한다.
+insert into hboard (title, content, writer, ref, step, refOrder)
+values(#{title}, #{content}, #{writer}, #{ref}, #{step}, #{refOrder});

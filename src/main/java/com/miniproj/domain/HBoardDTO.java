@@ -27,6 +27,10 @@ public class HBoardDTO {
     
     private String writer;
 
+    private int ref;
+    private int step;
+    private int refOrder;
+
     // 업로드된 파일들
     private List<MultipartFile> multipartFiles;
 

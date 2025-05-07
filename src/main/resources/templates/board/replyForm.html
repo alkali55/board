@@ -8,16 +8,20 @@
 </head>
 <body>
     <div layout:fragment="content">
-        <h1>글 등록</h1>
+        <h1>답글 등록</h1>
+        <h2 th:text="|${reply.ref}번 글에 대한 답글 작성 페이지|"></h2>
 
         <div class="row mt-3">
 
-            <form th:action="@{/board/register}" th:object="${board}" method="post" id="boardForm" enctype="multipart/form-data">
+            <form th:action="@{/board/saveReply}" th:object="${reply}" method="post" id="boardForm" enctype="multipart/form-data">
                 <div class="input-group mb-3">
                     <span class="input-group-text">Title</span>
                     <input type="text" class="form-control" th:field="*{title}" placeholder="Title....">
                     <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
                     <div id="error-title" class="error-message"></div>
+                    <input type="hidden" th:field="*{ref}">
+                    <input type="hidden" th:field="*{step}">
+                    <input type="hidden" th:field="*{refOrder}">
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text">Content</span>
@@ -133,62 +137,61 @@
         }
 
         // Ajax로 form submit
-        $("#boardForm").on("submit", function(e){
-            e.preventDefault();
+        // $("#boardForm").on("submit", function(e){
+        //     e.preventDefault();
 
-            const formData = new FormData(document.getElementById("boardForm"));
+        //     const formData = new FormData(document.getElementById("boardForm"));
 
-            //const formData= new FormData();
-            // formData.append("title", $("#title").val())
+        //     //const formData= new FormData();
+        //     // formData.append("title", $("#title").val())
             
-            // selectedFiles.forEach(function(file){
-            //     formData.append("multipartFiles", file);
-            // });
+        //     // selectedFiles.forEach(function(file){
+        //     //     formData.append("multipartFiles", file);
+        //     // });
 
-            $.ajax({
-                url: "/board/register", // 데이터가 송수신될 서버의 주소
-                type: "POST", // 통신 방식 (GET, POST, PUT, DELETE)
-                // dataType: "json", // 수신받을 데이터의 타입 (MIME TYPE)
-                data: formData,
-                processData: false, // 쿼리스트링으로 변환하지 말고, formData 그대로 보내도록 설정
-                contentType: false, // Content-Type헤더가 application/x-www-form-urlencoded; charset=UTF-8로 자동 설정되는 것을 방지
-                // async: false, // 비동기옵션 off
-                success: function(){ // 통신이 성공하면 수행할 함수
+        //     $.ajax({
+        //         url: "/board/saveReply", // 데이터가 송수신될 서버의 주소
+        //         type: "POST", // 통신 방식 (GET, POST, PUT, DELETE)
+        //         // dataType: "json", // 수신받을 데이터의 타입 (MIME TYPE)
+        //         data: formData,
+        //         processData: false, // 쿼리스트링으로 변환하지 말고, formData 그대로 보내도록 설정
+        //         contentType: false, // Content-Type헤더가 application/x-www-form-urlencoded; charset=UTF-8로 자동 설정되는 것을 방지
+        //         // async: false, // 비동기옵션 off
+        //         success: function(){ // 통신이 성공하면 수행할 함수
 
-                    alert("저장완료");
-                    // console.log(data);
-                    location.href = "/board/list";
-                },
-                error: function(xhr){
-                    alert("저장 실패!!!!");
-                    console.log(xhr);
-                    console.log(xhr.status);
+        //             alert("저장완료");
+        //             // console.log(data);
+        //             location.href = "/board/list";
+        //         },
+        //         error: function(xhr){
+        //             alert("저장 실패!!!!");
+        //             console.log(xhr);
+        //             console.log(xhr.status);
 
-                    if (xhr.status == 400){
-                        const errors = xhr.responseJSON;
-                        console.log(errors);
-                        $(".error-message").text("");
+        //             if (xhr.status == 400){
+        //                 const errors = xhr.responseJSON;
+        //                 console.log(errors);
+        //                 $(".error-message").text("");
 
-                        for (let field in errors){
-                            let errorMsg = errors[field];
-                            $("#error-" + field).text(errorMsg);
-                        }
-                    } else if (xhr.status == 413){
-                        alert("파일 용량 초과");
-                    }
+        //                 for (let field in errors){
+        //                     let errorMsg = errors[field];
+        //                     $("#error-" + field).text(errorMsg);
+        //                 }
+        //             } else if (xhr.status == 413){
+        //                 alert("파일 용량 초과");
+        //             }
 
-                },
-                complete: function(){
-                }
-            });
+        //         },
+        //         complete: function(){
+        //         }
+        //     });
 
-        });
+        // });
 
         $("#boardForm").on("reset", function(){
             selectedFiles = [];
             $("#preview").empty();
         });
-        
     </script>
 </body>
 </html>

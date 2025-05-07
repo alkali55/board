@@ -29,7 +29,7 @@ public class FileUploadUtil {
     @Value("${file.upload-base-dir}")
     private String baseDir;
 
-    @Value("file.upload-url-path")
+    @Value("${file.upload-url-path}")
     private String uploadUrlPath;
 
     public List<BoardUpFilesVODTO> saveFiles(List<MultipartFile> multipartFileList) throws IOException {
