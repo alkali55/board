@@ -43,6 +43,8 @@ dependencies {
 	implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
 
 	implementation 'net.coobird:thumbnailator:0.4.8'
+
+	implementation 'org.springframework.security:spring-security-crypto'
 }
 
 tasks.named('test') {

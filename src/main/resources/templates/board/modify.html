@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{layout/basic.html}">
+<head>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h1>글 수정 페이지</h1>
+
+        <form th:action="@{/board/modifyBoardSave}" th:object="${board}" method="post" enctype="multipart/form-data">
+
+                <div class="input-group mb-3">
+                    <span class="input-group-text">BoardNo</span>
+                    <input id="boardNo" type="text" class="form-control" th:field="*{boardNo}" placeholder="Title...." readonly>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Title</span>
+                    <input type="text" class="form-control" th:field="*{title}" placeholder="Title....">
+                    <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+                    <div id="error-title" class="error-message"></div>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Content</span>
+                    <textarea class="form-control" th:field="*{content}" rows="5"></textarea>
+                    <div th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
+                    <div id="error-content" class="error-message"></div>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Writer</span>
+                    <input type="text" class="form-control" th:value="*{writer}" name="writer" placeholder="Writer...." readonly>
+                </div>
+                <div>
+                    <input type="hidden" th:field="*{ref}">
+                    <input type="hidden" th:field="*{step}">
+                    <input type="hidden" th:field="*{refOrder}">
+
+                    <input type="hidden" name="pageNo" th:value="${pagingRequestDTO.pageNo}">
+                    <input type="hidden" name="pagingSize" th:value="${pagingRequestDTO.pagingSize}">
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">postDate</span>
+                    <input type="text" class="form-control" th:value="${#temporals.format(board.postDate, 'yyyy-MM-dd HH:mm')}" readonly>
+                </div>
+
+                <!--첨부파일-->
+                <div th:if="${board.upfiles != null and #lists.size(board.upfiles) > 0 and board.upfiles[0].originalFileName != null}">
+                    <table id="fileTable" class="table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll"></th>
+                                <th>미리보기</th>
+                                <th>파일명</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="file : ${board.upfiles}">
+                                <td><input type="checkbox" class="fileCheckbox" th:attr="data-file-id=${file.fileNo}"></td>
+                                <td>
+                                    <img th:if="${file.isImage}" th:src="@{${file.thumbFileName}}" style="width: 100px;">
+                                </td>
+                                <td>
+                                    <span th:text="${file.originalFileName}"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align: center;">
+                                    <img th:src="@{/images/add.png}" class="addFileButton" style="cursor: pointer; width: 50px;">
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="my-4">
+                        <input type="button" class="btn btn-danger btn-lg removeUpFileBtn" th:value="|선택파일 삭제|" disabled>
+                        <input type="button" class="btn btn-info btn-lg cancelRemove" th:value="|파일삭제 취소|">
+                    </div>
+                </div>
+
+
+
+                <div th:if="${board.upfiles == null or #lists.isEmpty(board.upfiles)}">
+                    <p>첨부파일이 없습니다.</p>
+                    <div style="text-align: center;">
+                        <img th:src="@{/images/add.png}" class="addFileButton" style="cursor: pointer; width: 50px;">
+                    </div>
+                </div>
+
+                <div class="my-4">
+                    <div class="float-end">
+                        <button type="submit" class="btn btn-info btn-lg">Submit</button>
+                        <button type="reset" class="btn btn-secondary btn-lg">Reset</button>
+
+                        <a th:href="|@{/board/list}?${pagingRequestDTO.link}|" class="btn btn-primary btn-lg">목록으로</a>
+                    </div>
+                </div>
+
+
+
+
+        </form>
+
+    </div>
+
+    <th:block layout:fragment="script">
+
+        <script th:inline="javascript">
+            
+            const errors = [[${errors}]];
+            let errorMsg = "";
+            if (errors){
+                for (let i = 0; i< errors.length; i++){
+
+                    errorMsg += `${errors[i].field} : ${errors[i].defaultMessage}`;
+                }
+                alert(errorMsg);
+            }
+
+        </script>
+
+        <script th:src="@{/js/modify.js}"></script>
+    </th:block>
+
+</body>
+</html>

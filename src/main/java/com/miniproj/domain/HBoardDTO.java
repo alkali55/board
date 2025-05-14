@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @NoArgsConstructor
@@ -26,6 +27,8 @@ public class HBoardDTO {
     private String content;
     
     private String writer;
+
+    private LocalDateTime postDate;
 
     private int ref;
     private int step;

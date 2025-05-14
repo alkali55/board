@@ -8,7 +8,25 @@
 <body>
 <div layout:fragment="content">
   <h1>Board List</h1>
+  <div th:if="${error}" class="alert alert-danger" role="alert">[[${error}]]</div>
   <button type="button" class="btn btn-info btn-lg d-flex float-end mb-3" th:onclick="|location.href='@{/board/register}'|">글쓰기</button>
+
+  <!-- 검색 -->
+  <form action="/board/list" method="get">
+    <select class="form-select" name="type">
+      <option value="">---검색타입---</option>
+      <option value="c" th:selected="${pagingRequestDTO.type == 'c'}">내용</option>
+      <option value="t" th:selected="${pagingRequestDTO.type == 't'}">제목</option>
+      <option value="w" th:selected="${pagingRequestDTO.type == 'w'}">작성자</option>
+      <option value="tc" th:selected="${pagingRequestDTO.type == 'tc'}">제목+내용</option>
+      <option value="tcw" th:selected="${pagingRequestDTO.type == 'tcw'}">제목+내용+작성자</option>
+    </select>
+    <input type="text" class="form-control" placeholder="검색어 입력...." name="keyword" th:value="${pagingRequestDTO.keyword}">
+    <button type="submit" class="btn btn-outline-secondary">검색</button>
+    <button type="reset" class="btn btn-outline-secondary">초기화</button>
+
+  </form>
+
   <table class="table table-hover">
     <thead>
     <tr>
@@ -23,16 +41,24 @@
     </tr>
     </thead>
     <tbody>
-    <tr th:each="board : ${boards}">
+    <!-- 검색결과가 없는 경우 -->
+    <tr th:if="${#lists.isEmpty(responseDTO.dtoList)}">
+      <td colspan="8" class="text-center">검색결과가 없습니다.</td>
+    </tr>
+    <tr th:if="${!#lists.isEmpty(responseDTO.dtoList)}" th:each="board : ${responseDTO.dtoList}">
       <td th:text="${board.boardNo}">번호</td>
       <td>
-        <div th:style="|margin-left: calc(${board.step} * 20px)|">
-          <img th:if="${board.step > 0}" src="/images/reply.png" style="width: 15px; height: 15px;">
-          <a class="list-group-item list-group-item-action" th:text="${board.title}" th:href="@{/board/detail(boardNo=${board.boardNo})}" style="display: inline;">제목</a>
+        <!-- 삭제된 글 표시 -->
+        <span th:if="${board.isDelete == 'Y'}" style="color: gray">[삭제된 글입니다]</span>
+
+        <!-- 삭제되지 않은 글 -->
+        <div th:if="${board.isDelete != 'Y'}" th:style="|margin-left: calc(${board.step} * 20px)|">
+          <img th:if="${board.step > 0}" th:src="@{/images/reply.png}" style="width: 15px; height: 15px;">
+          <a class="list-group-item list-group-item-action" th:text="${board.title}" th:href="|@{/board/detail(boardNo=${board.boardNo})}&${pagingRequestDTO.getLink()}|" style="display: inline;">제목</a>
         </div>
       </td>
       <td th:text="${board.writer}">작성자</td>
-      <td th:text="${#dates.format(board.postDate, 'yyyy-MM-dd')}">작성일</td>
+      <td th:text="${#temporals.format(board.postDate, 'yyyy-MM-dd')}">작성일</td>
       <td th:text="${board.readCount}">조회수</td>
       <td th:text="${board.ref}">ref</td>
       <td th:text="${board.step}">step</td>
@@ -40,12 +66,46 @@
     </tr>
     </tbody>
   </table>
+
+  <div class="paging">
+
+    <ul class="pagination justify-content-center">
+
+      <!-- 첫 페이지로 -->
+      <li class="page-item"><a th:class="${responseDTO.pageNo != 1} ? 'page-link prevPageBtn' : 'page-link prevPageBtn disabled'" th:href="|@{/board/list(pageNo=1)}&${pagingRequestDTO.genarateLinkExceptPageNo()}|"> << </a></li>
+<!--      <li class="page-item"  th:classappend="${responseDTO.pageNo == 1} ? disabled"><a class="page-link" th:href="@{/board/list(pageNo=1)}"><<</a></li>-->
+
+      <!-- 이전 버튼 -->
+      <li class="page-item"><a th:class="${responseDTO.prev} ? 'page-link prevPageBtn' : 'page-link prevPageBtn disabled'" th:href="|@{/board/list(pageNo=${responseDTO.start - 10})}&${pagingRequestDTO.genarateLinkExceptPageNo()}|">Previous</a></li>
+      
+      <!-- 페이지 번호 (active 적용하기) -->
+      <li class="page-item" th:each="i : ${#numbers.sequence(responseDTO.start, responseDTO.end)}"><a th:class="${responseDTO.pageNo == i} ? 'active page-link' : 'page-link'" th:href="|@{/board/list(pageNo=${i})}&${pagingRequestDTO.genarateLinkExceptPageNo()}|" th:text="${i}">1</a></li>
+
+      <!-- 다음 버튼 -->
+      <li class="page-item"><a th:class="${responseDTO.next} ? 'page-link prevPageBtn' : 'page-link prevPageBtn disabled'" th:href="|@{/board/list(pageNo=${responseDTO.end + 1})}&${pagingRequestDTO.genarateLinkExceptPageNo()}|">Next</a></li>
+
+      <!-- 마지막 페이지로 -->
+      <li class="page-item"><a th:class="${responseDTO.pageNo != responseDTO.last} ? 'page-link prevPageBtn' : 'page-link prevPageBtn disabled'" th:href="|@{/board/list(pageNo=${responseDTO.last})}&${pagingRequestDTO.genarateLinkExceptPageNo()}|"> >> </a></li>
+    </ul>
+
+  </div>
 </div>
 
 <script layout:fragment="script" th:inline="javascript">
   // comment
   console.log("script...");
   const arr = [[${arr}]]
+
+  // if(![[${responseDTO.prev}]]){
+
+  //   $(".prevPageBtn").addClass("disabled");
+  // }
+
+  // if(![[${responseDTO.next}]]){
+
+  //   $(".nextPageBtn").addClass("disabled");
+  // }
+
 </script>
 </body>
 </html>

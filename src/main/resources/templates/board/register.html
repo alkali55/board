@@ -27,7 +27,7 @@
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text">Writer</span>
-                    <input type="text" class="form-control" th:field="*{writer}" placeholder="Writer....">
+                    <input type="text" class="form-control" th:value="${session.loginMember.memberId}" name="writer" placeholder="Writer...." readonly>
                 </div>
                 <!--첨부파일-->
                 <div class="input-group mb-3">

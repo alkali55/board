@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.ssl.SslProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -98,6 +99,8 @@ public class FileUploadUtil {
 
         }
 
+//        throw new IOException("예외발생");
+
         return resultList;
     }
 
@@ -107,4 +110,17 @@ public class FileUploadUtil {
         return today.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
     }
 
+    public void deleteFile(String relativePath){
+
+        log.info("삭제할 파일 : {}", relativePath);
+        String fullPath = (baseDir + relativePath.replace(uploadUrlPath, "")).replace("/", File.separator);
+
+        log.info("fullPath = {}", fullPath);
+
+        File file = new File(fullPath);
+
+        if (file.exists()) {
+            file.delete();
+        }
+    }
 }

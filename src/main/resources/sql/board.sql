@@ -107,7 +107,7 @@ insert into boardreadlog (readWho, boardNo) values ('127.0.0.1', 8);
 
 select DATEDIFF(now(), readWhen) as datediff from boardreadlog where readWho = '127.0.0.1' and boardNo = 8;
 
-select ifnull((select DATEDIFF(now(), readWhen) from boardreadlog where readWho = '127.0.0.1' and boardNo = 8), -1);
+select ifnull((select Hour(timediff(now(), readwhen)) from boardreadlog where readWho = '127.0.0.1' and boardNo = 8), -1);
 
 -- hboard에서 조회수(readCount) 1 증가
 update hboard set readcount = readcount + 1 where boardNo = 8;
@@ -125,3 +125,124 @@ update hboard set refOrder = refOrder + 1 where ref = #{ref} and refOrder > #{re
 -- 부모글의 step + 1을 step에, 부모글의 refOrder + 1을 refOrder에 저장한다.
 insert into hboard (title, content, writer, ref, step, refOrder)
 values(#{title}, #{content}, #{writer}, #{ref}, #{step}, #{refOrder});
+
+-- 게시글 수정
+update hboard set title = #{title}, content = #{content} where boardNo = #{boardNo};
+
+select boardNo, title, content, writer, ref, postDate, readCount, ref, step, refOrder
+from hboard where boardNo = #{boardNo};
+
+select * from boardupfiles where boardNo = #{boardNo};
+
+-- 페이징 (pagination)
+-- 데이터 수가 많아지면, 목록페이지를 가져올 때, 많은 시간이 걸릴 수 있고, 출력하는 데도 많은 자원이 소모된다.
+-- 일반적으로 페이징을 통해 최소한의 데이터를 보여주는 방식 선호.
+-- 페이징 처리 하면 데이터베이스에서 필요한 만큼의 최소한의 데이터를 가져오고 출력하므로 성능 개선에 도움이 된다.
+-- limit 이용
+-- select ... limit 보여주기시작할rowIndex번호, 1페이지당보여줄글의갯수
+
+-- pageNo = 1
+-- pagingSize = 10
+use jis;
+use jis;
+select * from hboard order by ref desc, refOrder asc limit 0, 10;
+
+-- pageNo = 2
+select * from hboard order by ref desc, refOrder asc limit 10, 10;
+-- pageNo = 3
+select * from hboard order by ref desc, refOrder asc limit 20, 10;
+
+-- pageNo = 102
+select * from hboard order by ref desc, refOrder asc limit 1010, 10;
+
+-- pageNo = 103
+-- select * from hboard order by ref desc, refOrder asc limit (pageNo - 1) * 10, 10;
+select * from hboard order by ref desc, refOrder asc limit 1020, 10;
+
+select count(*) from hboard;
+-- 총 글의 갯수 1026
+-- 1026 / 10 = 102.6
+-- 마지막 페이지번호 : 103
+-- 마지막 페이지번호 -> 총글의 갯수 / 10 -> 올림
+
+-- paging block
+-- 1 블럭 : start = 1, end = 10
+-- 2 블럭 : start = 11, end = 20
+-- 3 블럭 : start = 21, end = 30
+-- ...
+-- 11 블럭 : start = 101, end = 110
+
+-- 게시글 삭제
+-- isDelete 컬럼 추가
+ALTER TABLE `jis`.`hboard` 
+ADD COLUMN `isDelete` CHAR(1) NULL DEFAULT 'N' AFTER `refOrder`;
+
+-- 첨부파일 삭제
+delete from boardupfiles where boardNo = #{boardNo};
+
+-- 게시글 삭제 (isDelete = 'Y'로 업데이트)
+boardupfilesupdate hboard set isDelete = 'Y', title = '', content = '' where boardNo = #{boardNo};
+;
+use jis;
+-- 게시글 검색
+-- type == c (내용), keyword='테스트'
+select * from hboard where title like concat('%', '테스트', '%');
+
+-- type == tc (제목이나 내용) , keyword='테스트'
+select * from hboard where content like concat('%', '테스트', '%') or title like concat('%', '테스트', '%');
+
+-- 트랜잭션
+
+CREATE TABLE `jis`.`table_a` (
+  `id` INT NOT NULL,
+  `name` VARCHAR(45) NULL,
+  PRIMARY KEY (`id`));
+  
+  CREATE TABLE `jis`.`table_b` (
+  `id` INT NOT NULL,
+  `name` VARCHAR(45) NULL,
+  PRIMARY KEY (`id`));
+  
+  -- 포인트 정책
+  CREATE TABLE `jis`.`pointdef` (
+  `pointWhy` ENUM('SIGNUP', 'LOGIN', 'WRITE', 'REPLY') NOT NULL,
+  `pointScore` INT NOT NULL,
+  PRIMARY KEY (`pointWhy`))
+COMMENT = '멤버에게 적립할 포인트에 대한 정책 정의한 테이블';
+
+
+CREATE TABLE `jis`.`pointlog` (
+  `pointLogNo` INT NOT NULL AUTO_INCREMENT,
+  `pointWho` VARCHAR(8) NOT NULL,
+  `pointWhen` DATETIME NULL DEFAULT now(),
+  `pointWhy` ENUM('SIGNUP', 'LOGIN', 'WRITE', 'REPLY') NOT NULL,
+  `pointScore` INT NULL,
+  PRIMARY KEY (`pointLogNo`),
+  INDEX `fk_pointlog_member_idx` (`pointWho` ASC) VISIBLE,
+  INDEX `fk_pointlog_pointdef_idx` (`pointWhy` ASC) VISIBLE,
+  CONSTRAINT `fk_pointlog_member`
+    FOREIGN KEY (`pointWho`)
+    REFERENCES `jis`.`member` (`memberId`)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_pointlog_pointdef`
+    FOREIGN KEY (`pointWhy`)
+    REFERENCES `jis`.`pointdef` (`pointWhy`)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE)
+COMMENT = '멤버에게 지급된 포인트 기록 테이블';
+
+-- score 얻어오기
+select pointScore from pointdef where pointWhy = #{pointWhy};
+
+insert into pointlog(pointWho, pointWhy, pointScore) values(#{pointWho}, #{pointWhy}, #{pointScore});
+
+update member set memberPoint = memberPoint + #{pointScore}  where memberId = #{memberId};
+;
+-- 회원가입
+insert into member (memberId, memberPwd, memberName, mobile, email, registerDate, memberImg, gender)
+values (#{memberId}, #{memberPwd}, #{memberName}, #{mobile}, #{email}, #{registerDate}, #{memberImg}, #{gender});
+;
+-- hboard에 boardType 컬럼
+ALTER TABLE `jis`.`hboard` 
+ADD COLUMN `boardType` VARCHAR(10) NULL AFTER `isDelete`;

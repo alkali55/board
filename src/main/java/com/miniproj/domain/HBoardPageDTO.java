@@ -4,28 +4,23 @@ import lombok.*;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.List;
 
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Getter
 @Setter
 @Builder
 @ToString
-public class HBoardDeatilInfo {
+public class HBoardPageDTO {
 
     private int boardNo;
     private String title;
     private String content;
+    private String writer;
     private LocalDateTime postDate;
     private int readCount;
     private int ref;
     private int step;
     private int refOrder;
     private String isDelete;
-
-    private MemberVO writer;
-
-    private List<BoardUpFilesVODTO> upfiles; // 첨부파일 목록
-
 }

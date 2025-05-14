@@ -1,8 +1,6 @@
 package com.miniproj.service;
 
-import com.miniproj.domain.HBoardDTO;
-import com.miniproj.domain.HBoardDeatilInfo;
-import com.miniproj.domain.HBoardVO;
+import com.miniproj.domain.*;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -26,4 +24,19 @@ public interface BoardService {
     
     // 답글 저장
     void saveReply(HBoardDTO reply);
+
+    boolean modifyBoard(HBoardDTO board);
+
+    HBoardDTO getBoardDetail(int boardNo);
+
+    List<BoardUpFilesVODTO> viewFilesByBoardNo(int boardNo);
+    
+    // 게시글 목록 + 페이징
+    PagingResponseDTO<HBoardPageDTO> getList(PagingRequestDTO pagingRequestDTO);
+
+    // 게시글 삭제
+    List<BoardUpFilesVODTO> removeBoard(int boardNo);
+
+    // 게시글 목록 + 페이징 + 검색
+    PagingResponseDTO<HBoardPageDTO> getListWithSearch(PagingRequestDTO pagingRequestDTO);
 }

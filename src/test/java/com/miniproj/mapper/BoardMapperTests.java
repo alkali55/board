@@ -3,6 +3,7 @@ package com.miniproj.mapper;
 
 import com.miniproj.domain.HBoardDTO;
 import com.miniproj.domain.HBoardVO;
+import com.miniproj.domain.PagingRequestDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,4 +80,64 @@ public class BoardMapperTests {
         log.info("resultMap : {}", boardMapper.selectBoardDetailInfoByBoardNo(1).get(0));
     }
 
+    @Test
+    @Rollback(value = false)
+    public void insertDummyData(){
+
+        for(int i = 0; i < 1000; i++){
+            HBoardDTO dto = HBoardDTO.builder()
+                    .title("dummy 제목 " + i)
+                    .content("dummy 내용 "+ i)
+                    .writer("asdf123")
+                    .build();
+
+            boardMapper.insertNewBoard(dto);
+            boardMapper.updateRefToBoardNo(dto.getBoardNo());
+        }
+    }
+
+    @Test
+    public void testPaging(){
+//        PagingRequestDTO pagingRequestDTO = new PagingRequestDTO();
+        PagingRequestDTO pagingRequestDTO = PagingRequestDTO.builder()
+                .pageNo(102)
+                .pagingSize(10)
+                .build();
+
+        log.info("pagingRequestDTO = {}", pagingRequestDTO);
+        log.info("skip = {}", pagingRequestDTO.getSkip());
+
+        List<HBoardVO> list = boardMapper.selectList(pagingRequestDTO);
+        for (HBoardVO hBoardVO : list) {
+            log.info("pagination list = {}", hBoardVO);
+        }
+
+        log.info("전체 게시글 갯수 = {}", boardMapper.selectTotalCount());
+
+        int pageNo = 77;
+        log.info("end : {}", (((pageNo - 1) / 10) + 1) * 10);
+//
+//        int end = (int)(Math.ceil(pageNo / 10.0)) * 10;
+    }
+
+    @Test
+    public void testSearch(){
+
+        PagingRequestDTO pagingRequestDTO = PagingRequestDTO.builder()
+                .pageNo(1)
+                .pagingSize(10)
+//                .type("tcw")
+                .keyword("테스트")
+                .build();
+
+        log.info("pagingRequestDTO = {}", pagingRequestDTO);
+        log.info("pagingRequestDTO.getSearchTypes() = {}", pagingRequestDTO.getSearchTypes());
+
+//        List<HBoardVO> list = boardMapper.selectListWithSearch(pagingRequestDTO);
+        List<HBoardVO> list = boardMapper.selectByMyQuery(pagingRequestDTO);
+
+        for(HBoardVO hBoardVO : list){
+            log.info("list with pagination and search = {}", hBoardVO);
+        }
+    }
 }

@@ -1,9 +1,6 @@
 package com.miniproj.mapper;
 
-import com.miniproj.domain.BoardUpFilesVODTO;
-import com.miniproj.domain.HBoardDTO;
-import com.miniproj.domain.HBoardDeatilInfo;
-import com.miniproj.domain.HBoardVO;
+import com.miniproj.domain.*;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -14,11 +11,11 @@ public interface BoardMapper {
     @Select("select now()")
     String selectNow();
 
-    @Insert("insert into hboard(title, content, writer) values(#{title}, #{content}, #{writer})")
+    @Insert("insert into hboard(title, content, writer, boardType) values(#{title}, #{content}, #{writer}, 'hboard')")
     @Options(useGeneratedKeys = true, keyProperty = "boardNo")
     int insertNewBoard(HBoardDTO hBoardDTO);
 
-    @Update("update hboard set ref = #{boardNo} where boardNo=#{boardNo}")
+    @Update("update hboard set ref = #{boardNo} where boardNo=#{boardNo} and boardType = 'hboard'")
     int updateRefToBoardNo(@Param("boardNo") int boardNo);
 
     @Select("select * from hboard order by ref desc, refOrder asc")
@@ -38,7 +35,7 @@ public interface BoardMapper {
     List<HBoardDeatilInfo> selectBoardDetailInfoByBoardNo(int boardNo);
 
     // 게시글 상세 조회 + 조회수 처리 관련 쿼리문
-    @Select("select ifnull((select DATEDIFF(now(), readWhen) from boardreadlog where readWho = #{readWho} and boardNo = #{boardNo}), -1)")
+    @Select("select ifnull((select Hour(timediff(now(), readwhen)) from boardreadlog where readWho = #{readWho} and boardNo = #{boardNo}), -1)")
     int selectDateDiffOrMinusOne(@Param("readWho") String readWho, @Param("boardNo") int boardNo);
 
     @Insert("insert into boardreadlog (readWho, boardNo) values (#{readWho}, #{boardNo})")
@@ -57,4 +54,40 @@ public interface BoardMapper {
     @Insert("insert into hboard(title, content, writer, ref, step, refOrder) values(#{title}, #{content}, #{writer}, #{ref}, #{step}, #{refOrder})")
     @Options(useGeneratedKeys = true, keyProperty = "boardNo")
     int insertReplyBoard(HBoardDTO replyBoard);
+    
+    // 게시글 수정
+    @Update("update hboard set title = #{title}, content = #{content} where boardNo = #{boardNo}")
+    int updateBoard(HBoardDTO modifyBoard);
+
+    @Delete("delete from boardupfiles where fileNo = #{fileNo}")
+    int deleteFileByNo(int fileNo);
+
+    @Select("select boardNo, title, content, writer, ref, postDate, readCount, ref, step, refOrder\n" +
+            "from hboard where boardNo = #{boardNo}")
+    HBoardDTO selectBoardDetail(int boardNo);
+
+    @Select("select * from boardupfiles where boardNo = #{boardNo}")
+    List<BoardUpFilesVODTO> selectFilesByBoardNo(int boardNo);
+
+    // 페이징
+    @Select("select * from hboard order by ref desc, refOrder asc limit #{skip}, #{pagingSize}")
+    List<HBoardVO> selectList(PagingRequestDTO pagingRequestDTO);
+
+    @Select("select count(*) from hboard")
+    int selectTotalCount();
+
+    // 게시글 삭제
+    @Delete("delete from boardupfiles where boardNo = #{boardNo}")
+    int deleteAllBoardUpFiles(int boardNo);
+
+    @Update("update hboard set isDelete = 'Y', title = '', content = '' where boardNo = #{boardNo}")
+    int deleteBoardByBoardNo(int boardNo);
+
+    // 게시글 검색
+    List<HBoardVO> selectListWithSearch(PagingRequestDTO pagingRequestDTO);
+
+    List<HBoardVO> selectByMyQuery(PagingRequestDTO pagingRequestDTO);
+    
+    // 검색된 총 글의 갯수
+    int selectTotalCountWithSearch(PagingRequestDTO pagingRequestDTO);
 }

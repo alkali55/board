@@ -13,6 +13,7 @@
         <result property="ref" column="ref"/>
         <result property="step" column="step"/>
         <result property="refOrder" column="refOrder"/>
+        <result property="isDelete" column="isDelete"/>
 <!--        작성자 정보-->
         <association property="writer" javaType="com.miniproj.domain.MemberVO">
             <id property="memberId" column="writer" />
@@ -36,13 +37,68 @@
     </resultMap>
     
     <select id="selectBoardDetailInfoByBoardNo" resultMap="BoardDetailMap">
-        select h.boardNo, h.title, h.content, h.writer, h.postDate, h.readCount, h.ref, h.step, h.refOrder,
+        select h.boardNo, h.title, h.content, h.writer, h.postDate, h.readCount, h.ref, h.step, h.refOrder, h.isDelete,
         f.*, m.memberName, m.email
         from hboard h left outer join boardupfiles f
         on h.boardNo = f.boardNo
         inner join member m
         on h.writer = m.memberId
         where h.boardNo = #{boardNo}
+    </select>
+
+    <!--  검색  -->
+    <sql id="search">
+        <where>
+            <if test="searchTypes != null and searchTypes.size > 0">
+                <foreach collection="searchTypes" item="type" separator=" OR ">
+                    <choose>
+                        <when test="type == 't'.toString()">
+                            title like concat('%', #{keyword}, '%')
+                        </when>
+                        <when test="type == 'c'.toString()">
+                            content like concat('%', #{keyword}, '%')
+                        </when>
+                        <when test="type == 'w'.toString()">
+                            writer like concat('%', #{keyword}, '%')
+                        </when>
+                    </choose>
+                </foreach>
+            </if>
+        </where>
+
+    </sql>
+
+    <select id="selectListWithSearch" resultType="HBoardVO">
+        select * from hboard
+
+        <include refid="search"/>
+
+        order by ref desc, refOrder asc limit #{skip}, #{pagingSize}
+    </select>
+
+    <select id="selectTotalCountWithSearch" resultType="int">
+        select count(*) from hboard
+        <include refid="search"/>
+
+    </select>
+
+
+
+
+    <select id="selectByMyQuery" resultType="HBoardVO">
+        select * from hboard
+        <where>
+            <if test="type == 't'.toString() or type == 'tc'.toString() or type == 'tcw'.toString()">
+                title like concat('%', #{keyword}, '%')
+            </if>
+            <if test="type == 'c'.toString() or type == 'tc'.toString() or type == 'tcw'.toString()">
+                or content like concat('%', #{keyword}, '%')
+            </if>
+            <if test="type == 'w'.toString() or type == 'tcw'.toString()">
+                or writer like concat('%', #{keyword}, '%')
+            </if>
+        </where>
+        order by ref desc, refOrder asc limit #{skip}, #{pagingSize}
     </select>
 
 </mapper>
