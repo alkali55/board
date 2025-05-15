@@ -3,6 +3,8 @@ package com.miniproj.controller.member;
 import com.miniproj.domain.LoginDTO;
 import com.miniproj.domain.Member;
 import com.miniproj.service.MemberService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,10 +68,23 @@ public class MemberController {
     }
 
     @GetMapping("/logout")
-    public String logoutMember(HttpSession session){
+    public String logoutMember(HttpSession session, HttpServletResponse response){
+        Member loginMember = (Member)session.getAttribute("loginMember");
 
-        if (session.getAttribute("loginMember") != null){
+        if (loginMember != null){
+
+            // 자동로그인 쿠키 삭제
+            Cookie cookie = new Cookie("al", "");
+            cookie.setPath("/");
+            cookie.setMaxAge(0);
+            response.addCookie(cookie);
+
+            // DB 자동 로그인 정보 삭제
+            memberService.clearAutoLoginInfo(loginMember.getMemberId());
+
             session.removeAttribute("loginMember");
+            session.removeAttribute("destPath");
+
             session.invalidate(); // 세션 무효화
         }
 

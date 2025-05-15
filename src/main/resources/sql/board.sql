@@ -246,3 +246,47 @@ values (#{memberId}, #{memberPwd}, #{memberName}, #{mobile}, #{email}, #{registe
 -- hboard에 boardType 컬럼
 ALTER TABLE `jis`.`hboard` 
 ADD COLUMN `boardType` VARCHAR(10) NULL AFTER `isDelete`;
+
+-- 자동로그인
+-- 멤버테이블 수정
+ALTER TABLE `jis`.`member` 
+ADD COLUMN `sesId` VARCHAR(40) NULL AFTER `gender`,
+ADD COLUMN `allimit` DATETIME NULL AFTER `sesId`;
+
+-- 자동로그인 정보를 db에 저장
+update member set sesId = #{sesId}, allimit = #{allimit}
+where memberId = #{memberId}
+;
+
+-- 쿠키에 자동로그인한다고 저장되어 있을 때, 자동로그인하는 쿼리문
+select * from member where sesId = #{sesId} and allimit > now()
+;
+
+-- 942109F1A55675DE5C19BC2B7CF7DAB0
+select * from member where sesId = '942109F1A55675DE5C19BC2B7CF7DAB0' and allimit > now();
+
+-- 자동로그인 데이터 삭제
+update member set sesId = null, allimit = null where memberId = #{memberId}
+;
+
+-- 댓글 테이블
+CREATE TABLE `jis`.`comment` (
+  `commentNo` INT NOT NULL AUTO_INCREMENT,
+  `commenter` VARCHAR(8) NULL,
+  `content` VARCHAR(500) NULL,
+  `regDate` DATETIME NULL DEFAULT now(),
+  `boardNo` INT NULL,
+  PRIMARY KEY (`commentNo`),
+  INDEX `kf_comment_member_idx` (`commenter` ASC) VISIBLE,
+  INDEX `fk_comment_hboard_idx` (`boardNo` ASC) VISIBLE,
+  CONSTRAINT `fk_comment_member`
+    FOREIGN KEY (`commenter`)
+    REFERENCES `jis`.`member` (`memberId`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_comment_hboard`
+    FOREIGN KEY (`boardNo`)
+    REFERENCES `jis`.`hboard` (`boardNo`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+COMMENT = '댓글 테이블';

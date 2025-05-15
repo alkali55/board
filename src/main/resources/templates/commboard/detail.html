@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{layout/basic.html}">
+<head>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h1>댓글형 글 상세페이지</h1>
+
+        <div class="row mt-3" th:object="${detail}">
+
+                <div class="input-group mb-3">
+                    <span class="input-group-text">BoardNo</span>
+                    <input id="boardNo" type="text" class="form-control" th:field="*{boardNo}" placeholder="Title...." readonly>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Title</span>
+                    <input type="text" class="form-control" th:field="*{title}" placeholder="Title...." readonly>
+                    <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+                    <div id="error-title" class="error-message"></div>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Content</span>
+                    <textarea class="form-control" th:field="*{content}" rows="5" readonly></textarea>
+                    <div th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
+                    <div id="error-content" class="error-message"></div>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Writer</span>
+                    <input type="text" class="form-control" th:field="*{writer.memberId}" placeholder="Writer...." readonly>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">postDate</span>
+                    <input type="text" class="form-control" th:value="${#temporals.format(detail.postDate, 'yyyy-MM-dd HH:mm')}" readonly>
+                </div>
+                <!--첨부파일-->
+                <div th:each="file : ${detail.upfiles}">
+                    <div>
+                        <img th:if="${file.isImage}" th:src="@{${file.thumbFileName}}">
+                        <div th:if="${!file.isImage}" th:text="${file.originalFileName}"></div>
+                    </div>
+
+                </div>
+
+                <div th:if="${detail.upfiles[0].originalFileName} == null">
+                    <p>첨부파일이 없습니다.</p>
+                </div>
+
+                <div class="my-4">
+                    <div class="float-end">
+                        <a th:href="|@{/commboard/list}?${pagingRequestDTO.link}|" class="btn btn-primary btn-lg">목록으로</a>
+                        <button class="btn btn-info btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}" th:data-link="${pagingRequestDTO.link}">수정</button>
+                        <!-- <button class="btn btn-info btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}" th:onclick="|location.href='@{/board/modify(boardNo=${detail.boardNo})}&${pagingRequestDTO.link}'|">수정</button> -->
+                        <button class="btn btn-danger btn-lg" id="removeBtn">삭제</button>
+
+                        <!-- 수정하기, 답글달기 -->
+                        <a th:href="@{/commboard/showReplyForm(boardNo=${detail.boardNo},
+                                                           ref=${detail.ref},
+                                                           step=${detail.step},
+                                                           refOrder=${detail.refOrder})}" class="btn btn-primary btn-lg">답글작성</a>
+                    </div>
+                </div>
+   
+        </div>
+
+        <!-- Toast -->
+            <div id="toastMessage" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <img src="..." class="rounded me-2" alt="...">
+                    <strong class="me-auto">알림</strong>
+                    <small>now</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    Hello, world! This is a toast message.
+                </div>
+            </div>
+
+            <!-- The Modal -->
+            <div class="modal" id="deleteModal">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form th:action="@{/commboard/removeBoard(boardNo=${detail.boardNo})}" method="post">
+                            <input type="hidden" name="boardNo" th:value="${detail.boardNo}">
+                            <!-- Modal Header -->
+                            <div class="modal-header">
+                                <h4 class="modal-title">알림</h4>
+                                <button type="button" class="btn-close closeModalBtn" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <!-- Modal body -->
+                            <div class="modal-body">
+                                <p>[[${detail.boardNo}]]번 글을 정말로 삭제하시겠습니까?</p>
+                            </div>
+
+                            <!-- Modal footer -->
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-danger">삭제</button>
+                                <button type="button" class="btn btn-secondary closeModalBtn" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+    </div> <!-- frag div 끝-->
+
+    <script layout:fragment="script" th:inline="javascript">
+
+        // 배열로 반환
+        // let status = [[${param.status}]];
+        // console.log(status);
+
+        $(function(){
+
+
+        
+
+            $("#modifyBtn").click(function(){
+                // /board/modify
+                // const boardNo = $("#boardNo").val();
+
+                const boardNo = $(this).data("boardno");
+                let link = $(this).data("link");
+                let url = `/commboard/modify?boardNo=${boardNo}`;
+                if(link){
+                    url += `&${link}`;
+                }
+
+                location.href = url; // 이동
+
+            });
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get("status");
+
+            if(status === "success"){
+
+                $(".toast-body").html("수정 완료");
+                $("#toastMessage").show();
+
+                // 2초 후에 toast 메시지 닫기
+                setTimeout(function(){
+                $("#toastMessage").fadeOut();
+                }, 2000);
+
+            } else if (status === "fail"){
+
+                $(".toast-body").html("수정 실패");
+                $("#toastMessage").show();
+
+                // 2초 후에 toast 메시지 닫기
+                setTimeout(function(){
+                $("#toastMessage").fadeOut();
+                }, 2000);
+            } else if (status === "authFail"){
+                alert("접근 권한이 없습니다.");
+            }
+
+            // ---- 게시글 삭제 ----
+            $("#removeBtn").on("click", function(){
+                $("#deleteModal").show();
+
+            });
+
+            $(".closeModalBtn").on("click", function(){
+                $("#deleteModal").hide();
+            });
+        });
+
+    </script>
+</body>
+</html>

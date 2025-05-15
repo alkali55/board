@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.miniproj.mapper.BoardMapper">
+<mapper namespace="com.miniproj.mapper.CommentBoardMapper">
     <resultMap id="BoardDetailMap" type="com.miniproj.domain.HBoardDeatilInfo">
 <!--        게시글 정보-->
         <id property="boardNo" column="boardNo" />
@@ -43,13 +43,13 @@
         on h.boardNo = f.boardNo
         inner join member m
         on h.writer = m.memberId
-        where h.boardNo = #{boardNo} and boardType = 'hboard'
+        where h.boardNo = #{boardNo} and boardType = 'cboard'
     </select>
 
     <!--  검색  -->
     <sql id="search">
         <where>
-            boardType = 'hboard'
+            boardType = 'cboard'
             <if test="searchTypes != null and searchTypes.size > 0">
                 AND (
                 <foreach collection="searchTypes" item="type" separator=" OR ">

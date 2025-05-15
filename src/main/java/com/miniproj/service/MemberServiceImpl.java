@@ -1,5 +1,6 @@
 package com.miniproj.service;
 
+import com.miniproj.domain.AutoLoginInfo;
 import com.miniproj.domain.LoginDTO;
 import com.miniproj.domain.Member;
 import com.miniproj.mapper.MemberMapper;
@@ -32,5 +33,26 @@ public class MemberServiceImpl implements MemberService{
         }
 
         return null;
+    }
+
+    @Override
+    public boolean saveAutoLoginInfo(AutoLoginInfo autoLoginInfo) {
+
+        boolean result = false;
+        if(memberMapper.updateAutoLoginInfo(autoLoginInfo) == 1){
+            result = true;
+        }
+        return result;
+    }
+
+    @Override
+    public Member checkAutoLogin(String savedCookieSesId) {
+        return memberMapper.checkAutoLoginMember(savedCookieSesId);
+    }
+
+    @Override
+    public void clearAutoLoginInfo(String memberId) {
+
+        memberMapper.clearAutoLoginInfo(memberId);
     }
 }

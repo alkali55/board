@@ -6,19 +6,19 @@ import org.apache.ibatis.annotations.*;
 import java.util.List;
 
 @Mapper
-public interface BoardMapper {
+public interface CommentBoardMapper {
 
     @Select("select now()")
     String selectNow();
 
-    @Insert("insert into hboard(title, content, writer, boardType) values(#{title}, #{content}, #{writer}, 'hboard')")
+    @Insert("insert into hboard(title, content, writer, boardType) values(#{title}, #{content}, #{writer}, 'cboard')")
     @Options(useGeneratedKeys = true, keyProperty = "boardNo")
     int insertNewBoard(HBoardDTO hBoardDTO);
 
-    @Update("update hboard set ref = #{boardNo} where boardNo=#{boardNo} and boardType = 'hboard'")
+    @Update("update hboard set ref = #{boardNo} where boardNo=#{boardNo} and boardType = 'cboard'")
     int updateRefToBoardNo(@Param("boardNo") int boardNo);
 
-    @Select("select * from hboard where boardType = 'hboard' order by ref desc, refOrder asc")
+    @Select("select * from hboard where boardType = 'cboard' order by ref desc, refOrder asc")
     List<HBoardVO> selectAllBoards();
 
     // 파일 저장
@@ -48,10 +48,10 @@ public interface BoardMapper {
     int incrementReadCount(@Param("boardNo") int boardNo);
 
     // 답글
-    @Update("update hboard set refOrder = refOrder + 1 where ref = #{ref} and refOrder > #{refOrder} and boardType = 'hboard'")
+    @Update("update hboard set refOrder = refOrder + 1 where ref = #{ref} and refOrder > #{refOrder} and boardType = 'cboard'")
     int updateRefOrder(@Param("ref") int ref, @Param("refOrder") int refOrder);
 
-    @Insert("insert into hboard(title, content, writer, ref, step, refOrder, boardType) values(#{title}, #{content}, #{writer}, #{ref}, #{step}, #{refOrder}, 'hboard')")
+    @Insert("insert into hboard(title, content, writer, ref, step, refOrder, boardType) values(#{title}, #{content}, #{writer}, #{ref}, #{step}, #{refOrder}, 'cboard')")
     @Options(useGeneratedKeys = true, keyProperty = "boardNo")
     int insertReplyBoard(HBoardDTO replyBoard);
     
@@ -70,10 +70,10 @@ public interface BoardMapper {
     List<BoardUpFilesVODTO> selectFilesByBoardNo(int boardNo);
 
     // 페이징
-    @Select("select * from hboard where boardType = 'hboard' order by ref desc, refOrder asc limit #{skip}, #{pagingSize}")
+    @Select("select * from hboard where boardType = 'cboard' order by ref desc, refOrder asc limit #{skip}, #{pagingSize}")
     List<HBoardVO> selectList(PagingRequestDTO pagingRequestDTO);
 
-    @Select("select count(*) from hboard where boardType = 'hboard'")
+    @Select("select count(*) from hboard where boardType = 'cboard'")
     int selectTotalCount();
 
     // 게시글 삭제

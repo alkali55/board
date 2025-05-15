@@ -2,17 +2,17 @@ package com.miniproj.domain;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Getter
 @Setter
 @ToString
-public class LoginDTO {
+public class AutoLoginInfo {
 
     private String memberId;
-    private String memberPwd;
-    private String remember;
-
-
+    private String sesId;
+    private LocalDateTime allimit;
 }
