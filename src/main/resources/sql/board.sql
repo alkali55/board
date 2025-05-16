@@ -290,3 +290,13 @@ CREATE TABLE `jis`.`comment` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 COMMENT = '댓글 테이블';
+
+-- 댓글 저장
+insert into comment(commenter, content, boardNo) values('user01', 'ddds?', '1036');
+
+select * from comment where boardNo = #{boardNo} order by commentNo desc
+;
+
+-- 댓글 목록 조회 + 페이징
+select * from comment where boardNo = 1036 order by commentNo desc
+limit #{skip}, #{pagingSize};

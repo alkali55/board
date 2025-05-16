@@ -34,6 +34,15 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         if (loginMember == null) {
             log.info("로그인하지 않은 사용자 -> 로그인 페이지로 이동......");
+
+//            String requestWith = request.getHeader("X-Requested-With");
+//            if ("XMLHttpRequest".equals(requestWith)){
+////                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인 해야함");
+//                response.sendRedirect("/member/login");
+//            } else {
+//                response.sendRedirect("/member/login");
+//            }
+
             response.sendRedirect("/member/login");
             return false;
         }

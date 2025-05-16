@@ -1,7 +1,6 @@
 package com.miniproj.controller;
 
 import com.miniproj.domain.*;
-import com.miniproj.service.BoardService;
 import com.miniproj.service.CommentBoardService;
 import com.miniproj.util.FileUploadUtil;
 import com.miniproj.util.GetClientIPAddr;
@@ -141,7 +140,7 @@ public class CommentBoardController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/detail")
+    @GetMapping("/viewBoard")
     public String boardDetail(@RequestParam(value = "boardNo", required = false, defaultValue = "-1") int boardNo,
                               PagingRequestDTO pagingRequestDTO,
                               RedirectAttributes redirectAttributes,
@@ -172,7 +171,7 @@ public class CommentBoardController {
         model.addAttribute("detail", detailInfos.get(0));
 //        model.addAttribute("pagingRequestDTO", pagingRequestDTO);
         log.info("첨부파일 리스트 : {}", detailInfos.get(0).getUpfiles());
-        return "/commboard/detail";
+        return "/commboard/viewBoard";
     }
 
     // 답글 등록폼

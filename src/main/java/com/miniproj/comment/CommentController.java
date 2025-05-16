@@ -1,7 +1,6 @@
 package com.miniproj.comment;
 
-import com.miniproj.domain.CommentDTO;
-import com.miniproj.domain.CommentVO;
+import com.miniproj.domain.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,18 +17,27 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    @GetMapping("/all/{boardNo}")
-    public List<CommentVO> getAllCommentByBoardNo(@PathVariable("boardNo") int boardNo){
+    @GetMapping("/all/{boardNo}/{pageNo}")
+    public ResponseEntity<MyResponseWithData> getAllCommentByBoardNo(@PathVariable("boardNo") int boardNo,
+                                                  @PathVariable("pageNo") int pageNo) {
 
-        log.info("댓글형 게시판 : {}번 글의 모든 댓글 조회....", boardNo);
+        log.info("댓글형 게시판 : {}번 글의 {} 페이지 댓글 조회....", boardNo, pageNo);
         List<CommentVO> result = commentService.selectAllComment(boardNo);
 
-        return result;
+        PagingRequestDTO pagingRequestDTO = PagingRequestDTO.builder()
+                .pageNo(pageNo)
+                .pagingSize(10)
+                .build();
+
+        PagingResponseDTO<CommentVO> responseDTO = commentService.getAllCommentsWithPaging(boardNo, pagingRequestDTO);
+
+        return ResponseEntity.ok(MyResponseWithData.success(responseDTO));
     }
 
-    @PostMapping("/{boardNo}")
-    public ResponseEntity<String> saveComment(@PathVariable("boardNo") int boardNo,
-                                      @RequestBody CommentDTO commentDTO){
+    @PostMapping(value = "/{boardNo}", produces = {"application/json; charset=utf-8"})
+    // , produces = {"application/json; charset=uft-8"}
+    public ResponseEntity<MyResponseWithData> saveComment(@PathVariable("boardNo") int boardNo,
+                                                          @RequestBody CommentDTO commentDTO){
 
         commentDTO.setBoardNo(boardNo);
 
@@ -37,9 +45,10 @@ public class CommentController {
 
         try {
             int result = commentService.registerComment(commentDTO);
-            return ResponseEntity.ok("success");
+            return ResponseEntity.ok(MyResponseWithData.success());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("internalServerError");
+            return ResponseEntity.ok(MyResponseWithData.fail());
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("internalServerError");
         }
 
 //        if(result == 1){

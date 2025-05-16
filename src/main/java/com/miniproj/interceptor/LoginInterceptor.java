@@ -65,6 +65,18 @@ public class LoginInterceptor implements HandlerInterceptor {
             result = true;
         }
 
+        if (request.getMethod().equalsIgnoreCase("GET")){ // GET 방식 요청인 경우
+            if (request.getParameter("redirectUrl") != null){
+                // 댓글작성하려다가 로그인하러 끌려옴
+                String redirectUrl = request.getParameter("redirectUrl");
+                if(redirectUrl.contains("view")){
+                    int boardNo = Integer.parseInt(request.getParameter("boardNo"));
+                    ses.setAttribute("destPath", redirectUrl + "?boardNo=" + boardNo);
+                }
+            }
+
+        }
+
         // 자동 로그인 유저 (get방식 요청에서만 검사해도 될듯..)
         // 쿠키 검사하여 자동로그인 쿠키가 존재여부
         Cookie autoLoginCookie = WebUtils.getCookie(request, "al");
@@ -93,6 +105,8 @@ public class LoginInterceptor implements HandlerInterceptor {
 
 
         }
+
+
 
 
         return result; // 해당 컨트롤러단의 메서드로 제어가 돌아간다.

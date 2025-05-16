@@ -36,7 +36,9 @@ public class WebConfig implements WebMvcConfigurer {
 
         // Auth 인터셉터
         registry.addInterceptor(authInterceptor)
-                .addPathPatterns("/board/register", "/board/modify", "/board/removeBoard", "/board/showReplyForm", "/commboard/register", "/commboard/modify", "/commboard/removeBoard", "/commboard/showReplyForm");
+                .addPathPatterns("/board/register", "/board/modify", "/board/removeBoard", "/board/showReplyForm",
+                        "/commboard/register", "/commboard/modify", "/commboard/removeBoard", "/commboard/showReplyForm",
+                        "/ajaxtest");
 
     }
 }

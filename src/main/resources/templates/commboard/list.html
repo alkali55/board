@@ -54,7 +54,7 @@
         <!-- 삭제되지 않은 글 -->
         <div th:if="${board.isDelete != 'Y'}" th:style="|margin-left: calc(${board.step} * 20px)|">
           <img th:if="${board.step > 0}" th:src="@{/images/reply.png}" style="width: 15px; height: 15px;">
-          <a class="list-group-item list-group-item-action" th:text="${board.title}" th:href="|@{/commboard/detail(boardNo=${board.boardNo})}&${pagingRequestDTO.getLink()}|" style="display: inline;">제목</a>
+          <a class="list-group-item list-group-item-action" th:text="${board.title}" th:href="|@{/commboard/viewBoard(boardNo=${board.boardNo})}&${pagingRequestDTO.getLink()}|" style="display: inline;">제목</a>
         </div>
       </td>
       <td th:text="${board.writer}">작성자</td>

@@ -2,6 +2,8 @@ package com.miniproj.comment;
 
 import com.miniproj.domain.CommentDTO;
 import com.miniproj.domain.CommentVO;
+import com.miniproj.domain.PagingRequestDTO;
+import com.miniproj.domain.PagingResponseDTO;
 import com.miniproj.mapper.CommentMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,4 +28,19 @@ public class CommentServiceImpl implements CommentService {
     public int registerComment(CommentDTO commentDTO) {
         return commentMapper.insertComment(commentDTO);
     }
+
+    @Override
+    public PagingResponseDTO<CommentVO> getAllCommentsWithPaging(int boardNo, PagingRequestDTO pagingRequestDTO) {
+
+        List<CommentVO> list = commentMapper.selectAllCommentsWithPaging(boardNo, pagingRequestDTO);
+        int totalCount = commentMapper.selectTotalCommentCount(boardNo);
+
+        return PagingResponseDTO.<CommentVO>allInfo()
+                .pagingRequestDTO(pagingRequestDTO)
+                .dtoList(list)
+                .total(totalCount)
+                .build();
+    }
+
+
 }

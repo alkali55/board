@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{layout/basic.html}">
+<head>
+    <link rel="stylesheet" th:href="@{/css/commViewBoard.css}">
+</head>
+<body>
+    <div layout:fragment="content">
+        <h1>댓글형 글 상세페이지</h1>
+
+        <div class="row mt-3" th:object="${detail}">
+
+                <div class="input-group mb-3">
+                    <span class="input-group-text">BoardNo</span>
+                    <input id="boardNo" type="text" class="form-control" th:field="*{boardNo}" placeholder="Title...." readonly>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Title</span>
+                    <input type="text" class="form-control" th:field="*{title}" placeholder="Title...." readonly>
+                    <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+                    <div id="error-title" class="error-message"></div>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Content</span>
+                    <textarea class="form-control" th:field="*{content}" rows="5" readonly></textarea>
+                    <div th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
+                    <div id="error-content" class="error-message"></div>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Writer</span>
+                    <input type="text" class="form-control" th:field="*{writer.memberId}" placeholder="Writer...." readonly>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">postDate</span>
+                    <input type="text" class="form-control" th:value="${#temporals.format(detail.postDate, 'yyyy-MM-dd HH:mm')}" readonly>
+                </div>
+                <!--첨부파일-->
+                <div th:each="file : ${detail.upfiles}">
+                    <div>
+                        <img th:if="${file.isImage}" th:src="@{${file.thumbFileName}}">
+                        <div th:if="${!file.isImage}" th:text="${file.originalFileName}"></div>
+                    </div>
+
+                </div>
+
+                <div th:if="${detail.upfiles[0].originalFileName} == null">
+                    <p>첨부파일이 없습니다.</p>
+                </div>
+
+                <div class="my-4">
+                    <div class="float-end">
+                        <a th:href="|@{/commboard/list}?${pagingRequestDTO.link}|" class="btn btn-primary btn-lg">목록으로</a>
+                        <button class="btn btn-info btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}" th:data-link="${pagingRequestDTO.link}">수정</button>
+                        <!-- <button class="btn btn-info btn-lg" id="modifyBtn" th:data-boardno="${detail.boardNo}" th:onclick="|location.href='@{/board/modify(boardNo=${detail.boardNo})}&${pagingRequestDTO.link}'|">수정</button> -->
+                        <button class="btn btn-danger btn-lg" id="removeBtn">삭제</button>
+
+                        <!-- 수정하기, 답글달기 -->
+<!--                        <a th:href="@{/commboard/showReplyForm(boardNo=${detail.boardNo},-->
+<!--                                                           ref=${detail.ref},-->
+<!--                                                           step=${detail.step},-->
+<!--                                                           refOrder=${detail.refOrder})}" class="btn btn-primary btn-lg">답글작성</a>-->
+
+                    </div>
+                </div>
+
+                <div th:onclick="ajaxtest()">AJAX-TEST</div>
+                <!-- 댓글 작성란 -->
+                <div class="commentInputArea">
+                    <input type="text" class="form-control" id="commentContent" placeholder="댓글을 입력해주세요">
+                    <img th:src="@{/images/saveComment.png}" th:onclick="saveComment()" style="cursor : pointer;">
+                </div>
+
+                <div class="commentList"></div>
+                <div class="commentPaging"></div>
+
+   
+        </div>
+
+        <!-- Toast -->
+            <div id="toastMessage" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <img src="#" class="rounded me-2" alt="...">
+                    <strong class="me-auto">알림</strong>
+                    <small>now</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    Hello, world! This is a toast message.
+                </div>
+            </div>
+
+            <!-- The Modal -->
+            <div class="modal" id="deleteModal">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form th:action="@{/commboard/removeBoard(boardNo=${detail.boardNo})}" method="post">
+                            <input type="hidden" name="boardNo" th:value="${detail.boardNo}">
+                            <!-- Modal Header -->
+                            <div class="modal-header">
+                                <h4 class="modal-title">알림</h4>
+                                <button type="button" class="btn-close closeModalBtn" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <!-- Modal body -->
+                            <div class="modal-body">
+                                <p>[[${detail.boardNo}]]번 글을 정말로 삭제하시겠습니까?</p>
+                            </div>
+
+                            <!-- Modal footer -->
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-danger">삭제</button>
+                                <button type="button" class="btn btn-secondary closeModalBtn" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+    </div> <!-- frag div 끝-->
+
+    <script layout:fragment="script" th:inline="javascript">
+
+        // 배열로 반환
+        // let status = [[${param.status}]];
+        // console.log(status);
+
+        let boardNo = [[${param.boardNo[0]}]];
+        let pageNo = 1;
+        // console.log(boardNo);
+
+        $(function(){
+
+            getAllComments(pageNo);
+            getInputCommentContent();
+        
+
+            $("#modifyBtn").click(function(){
+                // /board/modify
+                // const boardNo = $("#boardNo").val();
+
+                const boardNo = $(this).data("boardno");
+                let link = $(this).data("link");
+                let url = `/commboard/modify?boardNo=${boardNo}`;
+                if(link){
+                    url += `&${link}`;
+                }
+
+                location.href = url; // 이동
+
+            });
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get("status");
+
+            if(status === "success"){
+
+                $(".toast-body").html("수정 완료");
+                $("#toastMessage").show();
+
+                // 2초 후에 toast 메시지 닫기
+                setTimeout(function(){
+                $("#toastMessage").fadeOut();
+                }, 2000);
+
+            } else if (status === "fail"){
+
+                $(".toast-body").html("수정 실패");
+                $("#toastMessage").show();
+
+                // 2초 후에 toast 메시지 닫기
+                setTimeout(function(){
+                $("#toastMessage").fadeOut();
+                }, 2000);
+            } else if (status === "authFail"){
+                alert("접근 권한이 없습니다.");
+            }
+
+            // ---- 게시글 삭제 ----
+            $("#removeBtn").on("click", function(){
+                $("#deleteModal").show();
+
+            });
+
+            $(".closeModalBtn").on("click", function(){
+                $("#deleteModal").hide();
+            });
+        });
+
+
+        // 댓글 저장
+        function saveComment(){
+            // let commenter = "user01";
+            // 커멘터가 null 이면 리턴시키고 ajax 성공했을때 storage 비우기
+            let commenter = preAuth();
+            if(commenter == null){
+                return;
+            }
+            let content = $("#commentContent").val();
+
+            console.log(boardNo + "댓글 저장", content);
+
+            let commentData = {
+                content : content,
+                commenter : commenter
+            };
+
+            $.ajax({
+                url: `/comment/${boardNo}`, // 데이터가 송수신될 서버의 주소
+                type: "POST", // 통신 방식 (GET, POST, PUT, DELETE)
+                contentType: 'application/json;charset=utf-8',
+                data: JSON.stringify(commentData),
+                dataType: "json", // 수신받을 데이터 타입 (MIME TYPE)
+                // async: false, // 동기 통신 방식
+                success: function (data) {
+                    // 통신이 성공하면 수행할 함수
+                    console.log(data);
+                    if (data.resultMessage == "SUCCESS"){
+                        alert("댓글등록 완료");
+                        $("#commentContent").val("");
+                        getAllComments(pageNo);
+
+                    }
+                },
+                error: function () {},
+                complete: function () {
+                },
+            });
+
+        }
+
+        function getAllComments(pageNo){
+
+            $.ajax({
+                url: `/comment/all/${boardNo}/${pageNo}`, // 데이터가 송수신될 서버의 주소
+                type: "GET", // 통신 방식 (GET, POST, PUT, DELETE)
+                dataType: "json", // 수신받을 데이터 타입 (MIME TYPE)
+                // async: false, // 동기 통신 방식
+                success: function (data) {
+                    // 통신이 성공하면 수행할 함수
+                    console.log(data);
+                    // console.log(data.resultMessage);
+                    if(data.resultMessage === "SUCCESS"){
+
+                        displayAllComments(data.data.dtoList);
+                        displayPagination(data.data);
+                    }
+
+                },
+                error: function () {},
+                complete: function () {
+                },
+            });
+        }
+
+        function displayAllComments(commentList) {
+            // 댓글 목록 파싱
+            let output = `<ul class="list-group">`;
+
+            if(!commentList || commentList.length == 0){
+                output += `<li class="list-group-item">등록된 댓글이 없습니다.</li>`;
+            } else{
+                commentList.forEach(function(comment){
+                   output += `<li class="list-group-item d-flex align-items-center">
+                              <img src="/images/avatar.png" style="width: 50px; height: 50px; border-radius: 50px; margin-right: 15px" alt="profile">
+                              <div class="flex-grow-1">
+                                  <div class="fw-bold mb-1">${comment.content}</div>
+                                  <div class="small">${processPostDate(comment.regDate)}</div>
+                              </div>
+                              <div class="text-end">
+                                  <div>
+                                      <img src="/images/modify.png" style="width: 20px; height: 20px; cursor:pointer">
+                                      <img src="/images/delete.png" style="width: 20px; height: 20px; cursor:pointer">
+                                  </div>
+                                  <div class="small text-secondary">${comment.commenter}</div>
+                              </div>
+                              </li>`;
+                });
+            }
+
+            output += `</ul>`;
+            $(".commentList").html(output);
+        }
+
+        function displayPagination(data) {
+            // 페이지네이션 생성
+        }
+
+        function processPostDate(writeDate){
+            // 댓글 작성일시 : 방금전, n분전, n시간전 ....형식으로 출력
+
+            const now = new Date(); // 현재 시간
+            const postDate = new Date(writeDate); // 덧글 작성 시간
+
+            let diff = (now - postDate) / 1000; // 초 단위
+            // diff = 60 * 60 * 4 // 4시간
+            // diff = 60 * 9;
+            // console.log(diff);
+
+            const times = [
+                {name : "일", time: 24 * 60 * 60},
+                {name : "시간", time: 60 * 60},
+                {name : "분", time: 60}
+            ];
+
+            for (let val of times){
+                let betweenTime = Math.floor(diff / val.time);
+                // console.log(writeDate, diff, betweenTime);
+                // console.log(betweenTime + val.name + "전");
+
+                if(betweenTime > 0 && val.nale != "일"){
+                    return betweenTime + val.name + "전";
+                } else if (betweenTime > 0 && val.name == "일"){ // 하루보다 큰 값이면 그냥 작성일 출력
+                    return postDate.toLocaleString();
+                }
+            }
+
+            return " 방금전";
+        }
+
+        // AJAX INTERCEPTOR 테스트
+        function ajaxtest(){
+            $.ajax({
+                url: `/ajaxtest`, // 데이터가 송수신될 서버의 주소
+                type: "post", // 통신 방식 (GET, POST, PUT, DELETE)
+                dataType: "json", // 수신받을 데이터 타입 (MIME TYPE)
+                // async: false, // 동기 통신 방식
+                success: function (data) {
+                    // 통신이 성공하면 수행할 함수
+                    console.log(data);
+                },
+                error: function (error) {
+                    console.log(error);
+                    if(error.status == 401){
+                        location.href = `/member/login?boardNo=${boardNo}`;
+                    }
+                },
+                complete: function () {
+                },
+            });
+        }
+
+        function preAuth(){
+            // 댓글 저장, 수정, 삭제 시 로그인 인증
+            let commenter = [[${session.loginMember}]];
+
+            console.log(commenter);
+            if (commenter == null){ // 로그인하지 않음
+                alert("로그인 후 댓글 작성할 수 있어요");
+                location.href=`/member/login?redirectUrl=/commboard/viewBoard&boardNo=${boardNo}`;
+
+                // 로컬 스토리지에 댓글 내용이 있으면 저장
+                let commentContent = $("#commentContent").val();
+
+                if (commentContent != ''){
+                    localStorage.setItem("commentContent", commentContent);
+                }
+
+                return null;
+            } else {
+                console.log("로그인된 사용자 ID : ", commenter.memberId);
+            }
+
+            return commenter.memberId;
+            
+        }
+
+        function getInputCommentContent(){
+            // 페이지가 로드되면 호출된다. 로컬스토리지에 저장했던 댓글 내용이 있다면
+            // 입력창에 붙여넣기 한다.
+            let commentContent = localStorage.getItem("commentContent");
+            if (commentContent != null && commentContent != ""){
+                $("#commentContent").val(commentContent);
+                localStorage.removeItem("commentContent");
+            }
+        }
+
+
+    </script>
+</body>
+</html>
