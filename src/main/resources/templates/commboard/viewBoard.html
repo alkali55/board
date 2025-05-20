@@ -64,8 +64,16 @@
 
                     </div>
                 </div>
+                <!-- 좋아요 -->
+                <div class="mb-2">
+                    <i id="heartIcon" class="fa-regular fa-heart" style="cursor: pointer; color: red;"></i>
+                    <span id="likeCount">0</span>
+                </div>
+                <div id="likePeople"></div>
 
-                <div th:onclick="ajaxtest()">AJAX-TEST</div>
+
+<!--                <div th:onclick="ajaxtest()">AJAX-TEST</div>-->
+
                 <!-- 댓글 작성란 -->
                 <div class="commentInputArea">
                     <input type="text" class="form-control" id="commentContent" placeholder="댓글을 입력해주세요">
@@ -73,7 +81,7 @@
                 </div>
 
                 <div class="commentList"></div>
-                <div class="commentPaging"></div>
+                <div class="commentPagination"></div>
 
    
         </div>
@@ -118,7 +126,8 @@
                 </div>
             </div>
 
-
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+        <script src="https://kit.fontawesome.com/a5e7637fb6.js" crossorigin="anonymous"></script>
     </div> <!-- frag div 끝-->
 
     <script layout:fragment="script" th:inline="javascript">
@@ -129,12 +138,15 @@
 
         let boardNo = [[${param.boardNo[0]}]];
         let pageNo = 1;
+        // let likeAjaxCheck = 0;
+        // let likeAjaxCheck2 = 0;
         // console.log(boardNo);
 
         $(function(){
 
             getAllComments(pageNo);
             getInputCommentContent();
+            loadLikeStatus();
         
 
             $("#modifyBtn").click(function(){
@@ -187,8 +199,97 @@
             $(".closeModalBtn").on("click", function(){
                 $("#deleteModal").hide();
             });
+
+            // ----- 좋아요 하트 클릭 -----
+            $("#heartIcon").click(function(){
+
+               // if(likeAjaxCheck == 1 || likeAjaxCheck2 == 1){
+               //     return;
+               // }
+
+               let isLiked = $(this).hasClass("fa-solid");
+               let doesLike = isLiked ? 'dislike' : 'like';
+
+               sendBoardLike(doesLike);
+            });
+
         });
 
+        function sendBoardLike(doesLike){
+            let who = preAuth();
+            // likeAjaxCheck = 1;
+            // likeAjaxCheck2 = 1;
+
+            if(who == null) return;
+
+            $.ajax({
+                url: `/commboard/boardlike`, // 데이터가 송수신될 서버의 주소
+                type: "POST", // 통신 방식 (GET, POST, PUT, DELETE)
+                data: {
+                    "who" : who,
+                    "boardNo" : boardNo,
+                    "like" : doesLike
+                },
+                dataType: "text", // 수신받을 데이터 타입 (MIME TYPE)
+                // async: false, // 동기 통신 방식
+                success: function (data) {
+                    // 통신이 성공하면 수행할 함수
+                    console.log(data);
+                    if(data === "success"){
+                        loadLikeStatus();
+                        // likeAjaxCheck = 0;
+                    }
+                },
+                error: function (xhr) {
+                    console.log(xhr);
+                    if(xhr.responseText === "not-allowed" && xhr.status == 403){
+                        alert("자기 글에는 좋아요를 누를 수 없습니다.");
+                    }
+                },
+                complete: function () {
+                },
+            });
+
+        }
+
+        function loadLikeStatus(){
+
+            $.ajax({
+                url: `/commboard/boardlike/status/${boardNo}`, // 데이터가 송수신될 서버의 주소
+                type: "GET", // 통신 방식 (GET, POST, PUT, DELETE)
+                dataType: "json", // 수신받을 데이터 타입 (MIME TYPE)
+                // async: false, // 동기 통신 방식
+                success: function (data) {
+                    // 통신이 성공하면 수행할 함수
+                    console.log(data);
+                    // likeAjaxCheck2 = 0;
+                    if(data.liked){
+                        $("#heartIcon").removeClass("fa-regular").addClass("fa-solid");
+                    } else {
+                        $("#heartIcon").removeClass("fa-solid").addClass("fa-regular");
+                    }
+
+                    $("#likeCount").text(data.count);
+
+                    let memberList = data.topLikeMembers;
+                    let remaining = data.remainingCount;
+                    let output  = ``;
+
+                    if(memberList.length == 0){
+                       output = `아직 좋아요한 사람이 없습니다.`;
+                    } else if (remaining == 0) {
+                        output = `${memberList.join(', ')}님이 좋아합니다.`;
+                    } else {
+                        output = `${memberList.join(', ')}님 외 ${remaining}명`;
+                    }
+
+                    $("#likePeople").text(output);
+                },
+                error: function () {},
+                complete: function () {
+                },
+            });
+        }
 
         // 댓글 저장
         function saveComment(){
@@ -244,8 +345,8 @@
                     // console.log(data.resultMessage);
                     if(data.resultMessage === "SUCCESS"){
 
-                        displayAllComments(data.data.dtoList);
-                        displayPagination(data.data);
+                        displayAllComments(data.data);
+                        displayPagination(data.data.responseDTO);
                     }
 
                 },
@@ -255,15 +356,19 @@
             });
         }
 
-        function displayAllComments(commentList) {
+        function displayAllComments(commentData) {
             // 댓글 목록 파싱
+            let commentList = commentData.responseDTO.dtoList;
+            let loginMemberId = commentData.loginMemberId;
+            console.log("loginMemberId : ", loginMemberId);
+
             let output = `<ul class="list-group">`;
 
             if(!commentList || commentList.length == 0){
                 output += `<li class="list-group-item">등록된 댓글이 없습니다.</li>`;
             } else{
                 commentList.forEach(function(comment){
-                   output += `<li class="list-group-item d-flex align-items-center">
+                   output += `<li class="list-group-item d-flex align-items-center" id="comment_${comment.commentNo}">
                               <img src="/images/avatar.png" style="width: 50px; height: 50px; border-radius: 50px; margin-right: 15px" alt="profile">
                               <div class="flex-grow-1">
                                   <div class="fw-bold mb-1">${comment.content}</div>
@@ -271,8 +376,10 @@
                               </div>
                               <div class="text-end">
                                   <div>
-                                      <img src="/images/modify.png" style="width: 20px; height: 20px; cursor:pointer">
-                                      <img src="/images/delete.png" style="width: 20px; height: 20px; cursor:pointer">
+                                    <!-- 로그인 한 유저이고 작성자인 경우 수정, 삭제 버튼을 보이도록 함 -->
+                                    ${(loginMemberId === comment.commenter) ? `
+                                      <img src="/images/modify.png" style="width: 20px; height: 20px; cursor:pointer;" onclick="showEditComment(${comment.commentNo}, '${comment.content}')">
+                                      <img src="/images/delete.png" style="width: 20px; height: 20px; cursor:pointer;" onclick="removeComment(${comment.commentNo})">` : ''}
                                   </div>
                                   <div class="small text-secondary">${comment.commenter}</div>
                               </div>
@@ -284,11 +391,99 @@
             $(".commentList").html(output);
         }
 
-        function displayPagination(data) {
-            // 페이지네이션 생성
+        // 댓글 수정
+        function showEditComment(commentNo, oldContent){
+            console.log(commentNo, oldContent);
+            const commentItem = document.getElementById(`comment_${commentNo}`);
+            commentItem.innerHTML = `
+                <div class="flex-grow-1">
+                    <input type="text" class="form-control" value="${oldContent}" id="editContent_${commentNo}">
+                </div>
+                <div class="text-end">
+                    <button type="button" class="btn btn-outline-success" onclick="confirmEditComment(${commentNo})">저장</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="cancelEditComment()">취소</button>
+                </div>
+            `;
+
         }
 
-        function processPostDate(writeDate){
+        function confirmEditComment(commentNo){
+            const newContent = document.getElementById(`editContent_${commentNo}`).value.trim();
+
+            if (!newContent){
+                alert("내용을 입력하세요...");
+                return;
+            }
+
+            axios.patch(`/comment/${commentNo}`, {
+                content: newContent
+            })
+                .then(function (response) {
+                    console.log(response);
+                    if(response.data.resultMessage === "SUCCESS"){
+                        alert("댓글 수정 완료");
+                        getAllComments(pageNo);
+                    }
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+
+
+
+        }
+
+        function cancelEditComment(){
+            getAllComments(pageNo);
+        }
+
+
+        // ---- 페이지네이션 적용 ----
+
+        function displayPagination(pageData) {
+            console.log(pageData);
+            // 댓글이 없는 경우
+            if (pageData.total == 0) {
+                $(".commentPagination").html("");
+                return
+            }
+
+
+            let output = `<ul class="pagination justify-content-center" style="margin: 20px 0">`;
+            // prev 버튼
+            let prevPage = pageData.pageNo > 1 ? pageData.pageNo - 1 : 1;
+            output += `<li class="page-item ${pageData.pageNo === 1? 'disabled' : ''}">
+                        <a class="page-link page-btn" href="#" data-page="${prevPage}">Previous</a>
+                        </li>`;
+            // 페이지 번호
+            for (let i = pageData.start; i <= pageData.end; i++){
+                let active = pageData.pageNo == i ? "active" : "";
+                output += `<li class="page-item ${active}">
+                            <a class="page-link page-btn" href="#" data-page="${i}">${i}</a>
+                            </li>`;
+            }
+
+            // next 버튼
+            let nextPage = pageData.pageNo < pageData.last ? pageData.pageNo + 1 : pageData.last;
+            output += `<li class="page-item ${pageData.pageNo === pageData.last ? 'disabled' : ''}">
+                        <a class="page-link page-btn" href="#" data-page="${nextPage}">Next</a>
+                        </li>`;
+            output += `</ul>`;
+
+            $(".commentPagination").html(output);
+
+
+        }
+
+        $(document).on("click", ".page-btn", function(e){
+            e.preventDefault();
+            pageNo = $(this).data("page");
+
+            getAllComments(pageNo);
+
+        });
+
+        function processPostDate(writeDate) {
             // 댓글 작성일시 : 방금전, n분전, n시간전 ....형식으로 출력
 
             const now = new Date(); // 현재 시간
@@ -376,6 +571,31 @@
                 localStorage.removeItem("commentContent");
             }
         }
+
+        function removeComment(commentNo){
+
+            if(!confirm("정말 이 댓글을 삭제하시겠습니까?")){
+                return;
+            } else{
+
+                axios.delete(`/comment/${commentNo}`)
+                    .then(function (response) {
+                        console.log(response);
+                        if(response.data.resultMessage === "SUCCESS"){
+                            alert("댓글 삭제 완료");
+                            getAllComments(pageNo);
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+
+            }
+
+        }
+
+
+
 
 
     </script>

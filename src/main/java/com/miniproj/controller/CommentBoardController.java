@@ -5,9 +5,11 @@ import com.miniproj.service.CommentBoardService;
 import com.miniproj.util.FileUploadUtil;
 import com.miniproj.util.GetClientIPAddr;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -106,38 +108,42 @@ public class CommentBoardController {
 
     @PostMapping("/register")
     @ResponseBody
-    public ResponseEntity writeBoard(@Valid @ModelAttribute("board") HBoardDTO board, BindingResult bindingResult) throws IOException {
+    public ResponseEntity<MyResponseWithoutData> writeBoard(@Valid @ModelAttribute("board") CommBoardDTO commBoardDTO, BindingResult bindingResult,
+                                     @RequestPart(value="files", required = false) List<MultipartFile> files) throws IOException {
         // @Valid를 쓰면 spring이 Bean Validation호출하고 Hibernate Validator가 동작하고
         // 그 결과를 BindingResult에 담는다.
 
-        log.info("글 저장 요청 - HBoardDTO : {}", board);
+        log.info("글 저장 요청 - CommBoardDTO : {}", commBoardDTO);
+        log.info("files : {}", files);
 
         if (bindingResult.hasErrors()){
-            Map<String, String> errors = new HashMap<>();
-
-            log.info("fieldErrors: {}", bindingResult.getFieldErrors());
-            for(FieldError error : bindingResult.getFieldErrors()){
-                log.info("field : {}, msg : {}", error.getField(), error.getDefaultMessage());
-                errors.put(error.getField(), error.getDefaultMessage());
-            }
-            log.info("errors map : {}", errors);
-            return ResponseEntity.badRequest().body(errors);
+            
+            return ResponseEntity.badRequest().body(new MyResponseWithoutData(400, bindingResult.getAllErrors(), "입력오류"));
         }
 
-//        for (MultipartFile mpf : board.getMultipartFiles()){
-//            log.info("업로드 파일 이름 : {}", mpf.getOriginalFilename());
-//        }
 
-        List<BoardUpFilesVODTO> upFilesVODTOS = fileUploadUtil.saveFiles(board.getMultipartFiles());
-        board.setUpfiles(upFilesVODTOS);
 
-        boardService.saveBoardWithFiles(board);
+        if (files != null && !files.isEmpty()){
+            List<BoardUpFilesVODTO> upFilesVODTOS = fileUploadUtil.saveFiles(files);
+            commBoardDTO.setUpfiles(upFilesVODTOS);
+
+            for (MultipartFile file : files){
+                log.info("업로드 파일 이름 : {}", file.getOriginalFilename());
+            }
+        }
+
+        boardService.saveBoardWithFiles(commBoardDTO);
+
+//        List<BoardUpFilesVODTO> upFilesVODTOS = fileUploadUtil.saveFiles(board.getMultipartFiles());
+//        board.setUpfiles(upFilesVODTOS);
+//
+//        boardService.saveBoardWithFiles(board);
 
 //        for (BoardUpFilesVODTO dto : upFilesVODTOS){
 //            log.info("upfile dto : {}", dto);
 //        }
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(new MyResponseWithoutData(200, null, "SUCCESS"));
     }
 
     @GetMapping("/viewBoard")
@@ -362,5 +368,67 @@ public class CommentBoardController {
         }
 
         return "redirect:/commboard/list";
+    }
+
+    // 좋아요
+
+    /**
+     * 좋아요 또는 취소 요청 처리 (like/dislike)
+     * 추가 : 자기글은 좋아요 하지 못하도록 처리.
+     * @param who
+     * @param boardNo
+     * @param like
+     * @return
+     */
+    @PostMapping("/boardlike")
+    public ResponseEntity<String> handleBoardLike(@RequestParam String who,
+                                                  @RequestParam int boardNo,
+                                                  @RequestParam String like) {
+
+        log.info("{}님이 {}번 글을 {} 요청", who, boardNo, like);
+
+        // 글 작성자가 로그인 멤버인 경우
+        String writer = boardService.findBoardWriter(boardNo);
+        if(writer != null && writer.equals(who)){
+            log.warn("자신이 쓴 글은 좋아요 불가 : {}", who);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("not-allowed");
+        }
+
+        if("like".equals(like)){
+            boardService.likeBoard(boardNo, who);
+        } else if ("dislike".equals(like)){
+            boardService.dislikeBoard(boardNo, who);
+        }
+
+        return ResponseEntity.ok("success");
+    }
+
+    /**
+     * 로그인한 유저가 boardNo번 글을 좋아하는지 여부
+     * 좋아요 한 사람 수
+     * 좋아요를 한 top 3명의 아이디
+     *
+     */
+    @GetMapping("/boardlike/status/{boardNo}")
+    public ResponseEntity<Map<String, Object>> getBoardLikeStatus(@PathVariable int boardNo, HttpSession session){
+
+        int limit = 3;
+        Member loginMember = (Member)session.getAttribute("loginMember");
+        String memberId = loginMember != null ? loginMember.getMemberId() : null;
+
+        int totalLikes = boardService.countLikes(boardNo);
+        boolean liked = boardService.hasLiked(boardNo, memberId);
+        List<String> topLike = boardService.selectTopLikeMembers(boardNo, limit);
+        int remainder = totalLikes - topLike.size();
+
+        Map<String,Object> result = Map.of(
+                "remainingCount",remainder,
+                "liked",liked,
+                "topLikeMembers",topLike,
+                "count",totalLikes
+        );
+
+        return ResponseEntity.ok(result);
+
     }
 }

@@ -31,7 +31,7 @@ public class CommentBoardServiceImpl implements CommentBoardService{
 
     @Override
     @Transactional(rollbackFor = Exception.class) // 하나의 커넥션으로 모든 dml 문이 성공하면 커밋, 중간에 하나라도 실패하면 롤백
-    public void saveBoardWithFiles(HBoardDTO board) {
+    public void saveBoardWithFiles(CommBoardDTO board) {
         // 1. 게시글 저장
             boardMapper.insertNewBoard(board);
             boardMapper.updateRefToBoardNo(board.getBoardNo());
@@ -282,5 +282,35 @@ public class CommentBoardServiceImpl implements CommentBoardService{
                 .dtoList(dtoList)
                 .total(totalCount)
                 .build();
+    }
+
+    @Override
+    public int likeBoard(int boardNo, String who) {
+        return boardMapper.insertLike(boardNo, who);
+    }
+
+    @Override
+    public int countLikes(int boardNo) {
+        return boardMapper.countLike(boardNo);
+    }
+
+    @Override
+    public boolean hasLiked(int boardNo, String memberId) {
+        return boardMapper.hasLiked(boardNo, memberId) == 1;
+    }
+
+    @Override
+    public List<String> selectTopLikeMembers(int boardNo, int limit) {
+        return boardMapper.selectTopLikeMembers(boardNo, limit);
+    }
+
+    @Override
+    public int dislikeBoard(int boardNo, String who) {
+        return boardMapper.deleteLike(boardNo, who);
+    }
+
+    @Override
+    public String findBoardWriter(int boardNo) {
+        return boardMapper.selectBoardWriter(boardNo);
     }
 }

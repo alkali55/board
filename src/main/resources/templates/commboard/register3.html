@@ -5,15 +5,6 @@
       layout:decorate="~{layout/basic.html}">
 <head>
     <link rel="stylesheet" th:href="@{/css/register.css}" />
-    <style>
-        .uploadArea{
-            width: 100%;
-            height: 200px;
-            background-color: lightgray;
-            text-align: center;
-            line-height: 200px;
-        }
-    </style>
 </head>
 <body>
     <div layout:fragment="content">
@@ -21,23 +12,29 @@
 
         <div class="row mt-3">
 
-            <form th:action="@{/commboard/register}" method="post" id="registerForm">
+            <form th:action="@{/commboard/register}" th:object="${board}" method="post" id="boardForm" enctype="multipart/form-data">
                 <div class="input-group mb-3">
                     <span class="input-group-text">Title</span>
-                    <input type="text" class="form-control" name="title" placeholder="Title....">
-                    <div id="error-title" class="text-danger field-error" data-field="title"></div>
+                    <input type="text" class="form-control" th:field="*{title}" placeholder="Title....">
+                    <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+                    <div id="error-title" class="error-message"></div>
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text">Content</span>
-                    <textarea class="form-control" name="content" rows="5"></textarea>
-                    <div id="error-content" class="text-danger field-error" data-field="content"></div>
+                    <textarea class="form-control" th:field="*{content}" rows="5"></textarea>
+                    <div th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
+                    <div id="error-content" class="error-message"></div>
                 </div>
                 <div class="input-group mb-3">
                     <span class="input-group-text">Writer</span>
                     <input type="text" class="form-control" th:value="${session.loginMember.memberId}" name="writer" placeholder="Writer...." readonly>
                 </div>
-                <!--  첨부파일 드래그 앤 드롭 영역  -->
-                <div class="mb-3 uploadArea">파일을 여기에 드래그 앤 드롭하세요</div>
+                <!--첨부파일-->
+                <div class="input-group mb-3">
+                    <span class="input-group-text">첨부파일</span>
+                    <input type="file" class="form-control" id="fileInput" name="multipartFiles" multiple>
+                </div>
+
                 <div id="preview"></div>
 
                 <div class="my-4">
@@ -53,115 +50,143 @@
             </div> -->
 
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
     </div>
 
     <script layout:fragment="script" th:inline="javascript">
-        let fileList= [];
 
-        // 드래그 앤 드롭
-        $(".uploadArea").on("dragenter dragover", function(event){
-           event.preventDefault();
-        }).on("drop", function(event){
-            event.preventDefault();
+        let selectedFiles = [];
 
-            const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
-            let files = Array.from(event.originalEvent.dataTransfer.files);
-            files.forEach(function(file){
-                if (file.size > MAX_FILE_SIZE){
-                    alert("1MB를 초과하여 업로드할 수 없습니다.");
-                } else {
-                    fileList.push(file);
+        $('#fileInput').on('change', function(){
+            // alert("!");
+            console.log(event.target.files);
+
+            let newFiles = Array.from(event.target.files);
+            console.log(newFiles);
+
+            newFiles.forEach(function(file){
+
+                if(!selectedFiles.some(function(f){
+                    return (f.name == file.name && f.size == file.size && f.lastModified == file.lastModified);
+                })){
+
+                    selectedFiles.push(file);
                 }
             });
-            renderPreview();
+
+            console.log(selectedFiles);
+
+            updateInputFile();
+            showPreview();
 
         });
 
-        function renderPreview(){
+        function updateInputFile(){
+            const dataTransfer = new DataTransfer();
+            
+            selectedFiles.forEach(function(file){
+                
+                dataTransfer.items.add(file);
+                
+
+            })
+            document.getElementById("fileInput").files = dataTransfer.files;
+        }
+
+        function showPreview(){
+            // 미리보기
 
             $("#preview").empty();
 
+            selectedFiles.forEach(function(file, index){
+               let wrapper = $('<div>').addClass('file-preview').attr('data-index', index);
 
-            fileList.forEach(function(file, index){
+                let removeBtn = $("<span>X</span>").addClass("file-remove-btn").on("click", handleRemoveFile);
 
-                if(file.type.startsWith("image/")){ // 이미지인 경우
-                    let reader = new FileReader();
+               if(file.type.startsWith("image/")){
+                    // 이미지 파일인 경우
 
-                    reader.readAsDataURL(file);
+                    const reader = new FileReader();
+
                     reader.onload = function(e){
-                        console.log(e);
-                        let output = `
-                            <div class="card position-relative" style="width:140px; height: 160px;">
-                                <button type="button" class="btn btn-sm btn-danger position-absolute" style="top: 2px; right: 2px" onclick="removeFile(${index})">x</button>
-                                <div class="card-body">
-                                    <img src="${e.target.result}" style="height: 80px; object-fit: cover;">
-                                    <div class="small mt-1 text-truncate">${file.name}</div>
-                                </div>
-                            </div>`;
-
-                        $("#preview").append(output);
+                        const img = $('<img>').attr('src', e.target.result);
+                        const fileName = $("<div>").addClass("file-preview-name").text(file.name);
+                        wrapper.append(img).append(fileName).append(removeBtn);
+                        $("#preview").append(wrapper);
                     }
+                    reader.readAsDataURL(file);
+               } else {
+                    // 이미지 파일이 아닌 경우
+                    wrapper.text("파일 : " + file.name).append(removeBtn);
+                    $("#preview").append(wrapper);
+               };
 
-                } else { // 이미지가 아닌 경우
-                    let ext = file.name.split(".").pop().toUpperCase();
-                    let output = `
-                            <div class="card position-relative" style="width:140px; height: 160px;">
-                                <button type="button" class="btn btn-sm btn-danger position-absolute" style="top: 2px; right: 2px;" onclick="removeFile(${index})">x</button>
-                                <div class="card-body text-center">
-                                    <div class="border bg-light" style="height: 80px;">
-                                        <span>${ext}</span>
-                                    </div>
-                                    <div class="small mt-1 text-truncate">${file.name}</div>
-                                </div>
-                            </div>`;
-
-                    $("#preview").append(output);
-                }
             });
         }
 
-        $("#registerForm").on("submit", function(e){
+        function handleRemoveFile(event){
+            let removeIndex = $(this).parent().data("index");
+            alert("remove : " + removeIndex);
+            selectedFiles.splice(removeIndex, 1); // 배열에서 removeIndex번째 요소 1개를 삭제
+            updateInputFile();
+            showPreview();
+        }
+
+        // Ajax로 form submit
+        $("#boardForm").on("submit", function(e){
             e.preventDefault();
 
-            let form = e.target;
+            const formData = new FormData(document.getElementById("boardForm"));
 
-            let formData = new FormData(form);
+            //const formData= new FormData();
+            // formData.append("title", $("#title").val())
+            
+            // selectedFiles.forEach(function(file){
+            //     formData.append("multipartFiles", file);
+            // });
 
-            // 파일 추가
-            fileList.forEach(function(file){
-               formData.append("files", file);
+            $.ajax({
+                url: "/commboard/register", // 데이터가 송수신될 서버의 주소
+                type: "POST", // 통신 방식 (GET, POST, PUT, DELETE)
+                // dataType: "json", // 수신받을 데이터의 타입 (MIME TYPE)
+                data: formData,
+                processData: false, // 쿼리스트링으로 변환하지 말고, formData 그대로 보내도록 설정
+                contentType: false, // Content-Type헤더가 application/x-www-form-urlencoded; charset=UTF-8로 자동 설정되는 것을 방지
+                // async: false, // 비동기옵션 off
+                success: function(){ // 통신이 성공하면 수행할 함수
+
+                    alert("저장완료");
+                    // console.log(data);
+                    location.href = "/commboard/list";
+                },
+                error: function(xhr){
+                    alert("저장 실패!!!!");
+                    console.log(xhr);
+                    console.log(xhr.status);
+
+                    if (xhr.status == 400){
+                        const errors = xhr.responseJSON;
+                        console.log(errors);
+                        $(".error-message").text("");
+
+                        for (let field in errors){
+                            let errorMsg = errors[field];
+                            $("#error-" + field).text(errorMsg);
+                        }
+                    } else if (xhr.status == 413){
+                        alert("파일 용량 초과");
+                    }
+
+                },
+                complete: function(){
+                }
             });
-
-            axios.post("/commboard/register", formData)
-                .then(response => {
-                   console.log(response);
-                   if(response.data.msg == "SUCCESS"){
-                       location.href = "/commboard/list";
-                   }
-                })
-                .catch(err => {
-                   console.log(err);
-                   err.response.data.data.forEach(error =>{
-                      let field = error.field;
-                      let message = error.defaultMessage;
-                      $(`.field-error[data-field=${field}]`).text(message);
-                   });
-                });
 
         });
 
-        // 미리보기 삭제(x)
-        function removeFile(index){
-            fileList.splice(index, 1);
-            renderPreview();
-        }
-
-        // reset 버튼 클릭시
-        $("#registerForm").on("reset", function(e){
-            fileList = [];
+        $("#boardForm").on("reset", function(){
+            selectedFiles = [];
             $("#preview").empty();
-            $(".field-error").text("");
         });
         
     </script>

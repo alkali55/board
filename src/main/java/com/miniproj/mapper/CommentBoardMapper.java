@@ -13,7 +13,7 @@ public interface CommentBoardMapper {
 
     @Insert("insert into hboard(title, content, writer, boardType) values(#{title}, #{content}, #{writer}, 'cboard')")
     @Options(useGeneratedKeys = true, keyProperty = "boardNo")
-    int insertNewBoard(HBoardDTO hBoardDTO);
+    int insertNewBoard(CommBoardDTO hBoardDTO);
 
     @Update("update hboard set ref = #{boardNo} where boardNo=#{boardNo} and boardType = 'cboard'")
     int updateRefToBoardNo(@Param("boardNo") int boardNo);
@@ -90,4 +90,22 @@ public interface CommentBoardMapper {
     
     // 검색된 총 글의 갯수
     int selectTotalCountWithSearch(PagingRequestDTO pagingRequestDTO);
+
+    @Insert("insert into boardlike(who, boardNo) values(#{who}, #{boardNo})")
+    int insertLike(@Param("boardNo") int boardNo, @Param("who") String who);
+
+    @Select("select count(*) from boardlike where boardNo = #{boardNo}")
+    int countLike(int boardNo);
+
+    @Select("select count(*) from boardlike where boardNo = #{boardNo} and who = #{memberId}")
+    int hasLiked(@Param("boardNo") int boardNo, @Param("memberId") String memberId);
+
+    @Select("select who from boardlike where boardNo = #{boardNo} order by no desc limit #{limit}")
+    List<String> selectTopLikeMembers(int boardNo, int limit);
+
+    @Delete(("delete from boardlike where boardNo = #{boardNo} and who = #{who}"))
+    int deleteLike(@Param("boardNo") int boardNo, @Param("who") String who);
+
+    @Select("select writer from hboard where boardNo = #{boardNo}")
+    String selectBoardWriter(int boardNo);
 }

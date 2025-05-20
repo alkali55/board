@@ -299,4 +299,12 @@ select * from comment where boardNo = #{boardNo} order by commentNo desc
 
 -- 댓글 목록 조회 + 페이징
 select * from comment where boardNo = 1036 order by commentNo desc
-limit #{skip}, #{pagingSize};
+limit #{skip}, #{pagingSize}
+;
+
+-- 전체 댓글 갯수
+select count(*) from comment where boardNo = 1036;
+
+-- 댓글 수정
+update comment set content = #{content} where commentNo = #{commentNo}
+;

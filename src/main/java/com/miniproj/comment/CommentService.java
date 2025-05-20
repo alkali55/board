@@ -16,4 +16,10 @@ public interface CommentService {
     int registerComment(CommentDTO commentDTO);
 
     PagingResponseDTO<CommentVO> getAllCommentsWithPaging(int boardNo, PagingRequestDTO pagingRequestDTO);
+
+    int updateComment(CommentDTO commentDTO);
+
+    int deleteComment(int commentNo);
+
+    CommentVO getCommentByCommentNo(Integer commentNo);
 }

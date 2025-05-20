@@ -21,11 +21,11 @@ public class MemberServiceTests {
     public void testRegister(){
 
         Member member = Member.builder()
-                .memberId("user02")
+                .memberId("user05")
                 .memberPwd("1234")
-                .memberName("유저02")
-                .email("user02@abc.com")
-                .mobile("010-1111-1212")
+                .memberName("유저05")
+                .email("user05@abc.com")
+                .mobile("010-5555-5555")
                 .gender("F")
                 .build();
 
